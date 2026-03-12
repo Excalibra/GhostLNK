@@ -11,7 +11,7 @@
 <img src="https://img.shields.io/badge/Version-6.2-6a1f7a?style=for-the-badge" alt="GhostLNK v6.2">
 </p>
 
-<img width="1917" height="912" alt="image" src="https://github.com/user-attachments/assets/f9683e59-9a71-4e49-a5cd-7fab56cff33b" />
+<img width="1914" height="909" alt="image" src="https://github.com/user-attachments/assets/06232891-e5e5-45e0-9690-141953d10a3a" />
 
 
 ---
