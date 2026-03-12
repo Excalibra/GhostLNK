@@ -1,6 +1,6 @@
 <p align="center">
   
-# 👻 GhostLNK - Professional LNK Generator with Stealth Mode
+# 👻 GhostLNK - Advanced LNK Generator with Evasion
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.0+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
