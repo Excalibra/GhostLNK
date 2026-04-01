@@ -1,6 +1,6 @@
 <p align="center">
   
-# 👻 GhostLNK - Advanced LNK Generator with Evasion
+# 👻 GhostLNK - Advanced LNK Generator with Evasion 👻
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![PyQt6](https://img.shields.io/badge/PyQt6-6.0+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
@@ -58,6 +58,7 @@
 - **Icon Masquerading** - 8+ realistic icon options (PDF, Word, Excel, etc.)
 - **Live Console Output** - Real-time logging and debugging information
 - **Multi-Format Support** - Generate LNK files with customizable names and extensions
+- **Smart Import** - Automatically adds `-E` prefix to base64 strings when pasted manually
 
 ### 🔧 Technical Capabilities
 
@@ -156,36 +157,17 @@ Progress: ⚪ Step 1 → ⚪ Step 2 → ⚪ Step 3 → ⚪ Step 4
           (Turns green as you complete each step)
 ```
 
-### Advanced Features
+### 🔄 Importing Existing Base64 Strings
 
-#### Dropbox URL Validation
-```python
-# GhostLNK automatically validates Dropbox URLs
-❌ https://www.dropbox.com/s/abc123/file.pdf  # Missing dl=1
-✅ https://www.dropbox.com/s/abc123/file.pdf?dl=1  # Correct format
+If you have a pre-existing base64 encoded PowerShell command (from another tool), you can paste it directly into the **Import -E Argument** field and click **Import**. GhostLNK will automatically add the `-E` prefix if it's missing, ensuring the argument is ready for LNK generation.
+
+```
+Example:
+Paste: SQBFAFgAIAAoAE4AZ...
+Click Import → Automatically becomes: -E SQBFAFgAIAAoAE4AZ...
 ```
 
-#### Smart Option Management
-
-| Selection | Auto-Disabled | Visual Feedback |
-|-----------|---------------|-----------------|
-| Hide PowerShell checked | Pause + Debug | Grayed out with tooltip |
-| Hide PowerShell unchecked | None | Returns to normal |
-| Any option disabled | N/A | Gray text + explanation on hover |
-
-#### Icon Database
-```python
-ICON_DATABASE = {
-    "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11),
-    "Word Document": (r"C:\Windows\System32\SHELL32.dll", 1),
-    "Excel Spreadsheet": (r"C:\Windows\System32\SHELL32.dll", 3),
-    "Text Document": (r"C:\Windows\System32\notepad.exe", 0),
-    "PowerShell Script": (r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", 0),
-    "Executable": (r"C:\Windows\System32\SHELL32.dll", 3),
-    "JPG Image": (r"C:\Windows\System32\imageres.dll", 67),
-    "ZIP Archive": (r"C:\Windows\System32\imageres.dll", 165),
-}
-```
+A helpful hint appears below the import field to remind you to click Import after pasting.
 
 ---
 
@@ -329,8 +311,6 @@ GhostLNK/
 - ❌ Do not distribute malicious LNK files
 - ❌ Do not bypass security controls without authorization
 
-Violation of these terms may result in criminal prosecution under the Computer Fraud and Abuse Act (CFAA) and similar laws worldwide.
-
 ---
 
 ## 🤝 Contributing
@@ -374,7 +354,7 @@ We welcome contributions from the security community!
 
 | Version | Date | Key Features |
 |---------|------|--------------|
-| 6.2 | 2026-03-12 | **Smart Conflict Resolution**: Auto-disabling options with tooltips, visual progress indicators, step-by-step workflow, force repaint fixes for UI states |
+| 6.2 | 2026-04-01 | **Smart Import** – Automatic -E prefix addition for pasted base64 strings; GUI hint added; Conflict resolution fixes |
 | 6.1 | 2026-03-10 | Hidden PowerShell Window option added |
 | 6.0 | 2026-02-20 | Stealth Mode Edition with 3-level AV bypass |
 | 5.0 | 2026-01-15 | Dropbox URL validation, improved GUI |
@@ -411,6 +391,9 @@ We welcome contributions from the security community!
 **Q: Not sure which order to click buttons**
 - Follow the numbered steps (1️⃣ → 2️⃣ → 3️⃣ → 🚀)
 - Watch the progress indicators turn green
+
+**Q: Import field doesn't add `-E` automatically**
+- Click the **Import** button after pasting; the tool will add the prefix if missing.
 
 ---
 
@@ -460,7 +443,7 @@ of this software and associated documentation files...
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.2_Smart_Execution_Builder-6a1f7a?style=flat-square">
+  <img src="https://img.shields.io/badge/Version-6.2_Smart_Import-6a1f7a?style=flat-square">
   <img src="https://img.shields.io/badge/Python-3.8+-blue?style=flat-square">
   <img src="https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square">
 </p>
