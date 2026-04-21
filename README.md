@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img width="900" alt="GhostLNK Interface" src="https://github.com/user-attachments/assets/532f7d0e-b985-41da-8b7d-cb1e04c91ae6">
+  <img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/227e16d1-15b7-4978-837b-bddb2e9f2c52" />
 </p>
 
 ---
