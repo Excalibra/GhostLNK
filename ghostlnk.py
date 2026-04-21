@@ -1146,7 +1146,7 @@ class GhostLNKGUI(QMainWindow):
         self.binary_smuggle_cb.setToolTip(
             "Target: wscript.exe, Arguments: LNK file itself.\n"
             "Payload and VBS extractor are appended to the LNK.\n"
-            "No suspicious command line—evades Sophos."
+            "No suspicious command line—evades AV/EDR."
         )
         embedded_layout.addWidget(self.binary_smuggle_cb)
 
@@ -1163,7 +1163,7 @@ class GhostLNKGUI(QMainWindow):
         self.self_extract_cb.setToolTip(
             "Target: cmd.exe, Arguments: /c findstr ... > e.vbs & wscript //B e.vbs\n"
             "VBS extractor appended between markers; extracted and executed.\n"
-            "No PowerShell, evades Sophos static detection."
+            "No PowerShell, evades AV/EDR static detection."
         )
         embedded_layout.addWidget(self.self_extract_cb)
 
