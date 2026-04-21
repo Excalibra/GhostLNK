@@ -966,9 +966,9 @@ class GhostLNKGUI(QMainWindow):
 
         self.import_group.setLayout(import_layout)
         layout.addWidget(self.import_group)
-        
+
         # ---- Direct Base64 Input ----
-        base64_group = QGroupBox("🔐 Direct Base64 Input (Raw PowerShell Script)")
+        self.base64_group = QGroupBox("🔐 Direct Base64 Input (Raw PowerShell Script)")
         base64_layout = QVBoxLayout()
 
         self.base64_input = QTextEdit()
@@ -987,8 +987,8 @@ class GhostLNKGUI(QMainWindow):
         btn_layout.addWidget(self.clear_base64_btn)
 
         base64_layout.addLayout(btn_layout)
-        base64_group.setLayout(base64_layout)
-        layout.addWidget(base64_group)
+        self.base64_group.setLayout(base64_layout)
+        layout.addWidget(self.base64_group)
 
         # Preview
         preview_group = QGroupBox("Payload Preview")
@@ -1188,36 +1188,26 @@ class GhostLNKGUI(QMainWindow):
             self.debug_cb.setStyleSheet("color: #666666;")
             conflicts.append("Debug disabled: Debug output would be invisible")
 
-            # Highlight Hide PowerShell in green
             self.hide_pwsh_cb.setStyleSheet("color: #88ff88; font-weight: bold;")
             self.hide_indicator.setText("PowerShell Window: HIDDEN")
             self.hide_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
 
-            # Force repaint for affected checkboxes
             for cb in [self.pause_cb, self.debug_cb, self.hide_pwsh_cb]:
                 cb.style().unpolish(cb)
                 cb.style().polish(cb)
                 cb.update()
 
-            # Update mode indicator with conflicts
             self.mode_indicator.setText(f"Current Mode: {current_mode} (no pause, no debug)")
             self.mode_indicator.setStyleSheet("color: #ffaa00; font-weight: bold;")
 
-            # Set tooltips
             self.pause_cb.setToolTip(self.get_tooltip("pause", conflicts))
             self.debug_cb.setToolTip(self.get_tooltip("debug", conflicts))
             self.hide_pwsh_cb.setToolTip(self.get_tooltip("hide", conflicts))
             return
 
-        # CASE 2: Stealth-based rules (only when hide_pwsh is False)
-        # All stealth levels: ALL options should be available
-        # No options are disabled based on stealth level alone
-
-        # Update mode indicator with conflicts (none in stealth modes)
         self.mode_indicator.setText(f"Current Mode: {current_mode}")
         self.mode_indicator.setStyleSheet("color: #88ff88; font-weight: bold;")
 
-        # Set tooltips (no conflicts)
         self.pause_cb.setToolTip(self.get_tooltip("pause", conflicts))
         self.debug_cb.setToolTip(self.get_tooltip("debug", conflicts))
         self.hide_pwsh_cb.setToolTip(self.get_tooltip("hide", conflicts))
@@ -1470,7 +1460,6 @@ class GhostLNKGUI(QMainWindow):
                 else:
                     working_dir = None
 
-                # Validate target path exists
                 if not os.path.exists(target_path):
                     reply = QMessageBox.question(self, "Target Not Found",
                                                  f"The target '{target_path}' does not exist.\nDo you want to continue anyway?",
@@ -1487,9 +1476,8 @@ class GhostLNKGUI(QMainWindow):
                     return
                 target_path = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
                 arguments = arg
-                working_dir = None  # Let LNKEngine handle default
+                working_dir = None
 
-            # Common LNK parameters
             icon = self.icon_combo.currentText()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
 
@@ -1508,7 +1496,6 @@ class GhostLNKGUI(QMainWindow):
             if not save_path:
                 return
 
-            # For PowerShell mode, get stealth/hide settings
             if not self.raw_mode_cb.isChecked():
                 stealth = self.stealth_combo.currentIndex()
                 hide = self.hide_pwsh_cb.isChecked()
