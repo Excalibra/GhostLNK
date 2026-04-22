@@ -1,4 +1,6 @@
+<p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=6A1F7A&center=true&vCenter=true&width=600&lines=GhostLNK;Advanced+LNK+Generator+%2B+Evasion" alt="GhostLNK" />
+</p>
 
 <p align="center">
   <!-- Badges -->
@@ -10,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/227e16d1-15b7-4978-837b-bddb2e9f2c52" />
+  <img width="1919" height="909" alt="GhostLNK Interface" src="https://github.com/user-attachments/assets/227e16d1-15b7-4978-837b-bddb2e9f2c52" />
 </p>
 
 ---
@@ -39,7 +41,7 @@
 |-----------|-------------|
 | **Multi‑Stage Stager** | LNK → drops VBS → opens decoy PDF → creates scheduled task → executes final payload. Fragments the attack chain into benign‑looking steps. |
 | **True Icon Smuggling** | Embeds encrypted payload inside the LNK's `IconEnvironmentDataBlock`. The LNK target is `notepad.exe` (clean command line). A separate extractor VBS is saved alongside. |
-| **Self‑Extracting LNK** | Appends a VBS extractor between markers. The LNK runs `cmd.exe /c findstr ...` to extract and execute it with `wscript`. No PowerShell in arguments, reducing static signature exposure. |
+| **Self‑Extracting LNK (Hex)** | Appends a hex‑encoded VBS extractor. The LNK runs `cmd.exe /c findstr ...` to extract and decode it with `certutil -decodehex`, then executes with `wscript`. No Base64 patterns, evades static scanners. |
 | **Binary Icon Smuggling** | Appends a self‑contained VBS script to the LNK. Target = `wscript.exe //B` with the LNK itself as argument. |
 | **LotL Proxies** | Use trusted Windows binaries to launch payloads: `mshta.exe` (remote HTA), `rundll32.exe` (JavaScript), `regsvr32.exe` (fileless SCT), `conhost.exe` (parent process spoofing). |
 | **LNK Stomping** | Spoofs the displayed target path (e.g., `C:\Windows\System32\notepad.exe`) while the real command executes. |
@@ -64,6 +66,32 @@
 
 ---
 
+## 📁 Project Structure (Modular)
+
+GhostLNK has been refactored into a clean, maintainable structure:
+
+```
+GhostLNK/
+├── ghostlnk.py                 # Entry point – launches the GUI
+├── core/
+│   ├── __init__.py
+│   ├── engine.py               # LNKEngine – creates LNK files, binary patching
+│   └── converter.py            # PowerShellConverter, URLExamples
+├── gui/
+│   ├── __init__.py
+│   ├── main_window.py          # GhostLNKGUI – UI logic and interactions
+│   └── styles.py               # Neon dark theme
+├── utils/
+│   ├── __init__.py
+│   ├── helpers.py              # XOR, obfuscation, config I/O, anti‑sandbox
+│   └── dependencies.py         # Auto‑installation of PyQt6 and pylnk3
+├── README.md
+├── LICENSE
+└── requirements.txt
+```
+
+---
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -74,11 +102,11 @@
 ```bash
 git clone https://github.com/Excalibra/GhostLNK.git
 cd GhostLNK
-pip install PyQt6 pylnk3   # Auto‑installed on first run if missing
+pip install -r requirements.txt   # Installs PyQt6 and pylnk3
 python ghostlnk.py
 ```
 
-GhostLNK automatically installs missing dependencies when launched.
+GhostLNK automatically installs missing dependencies when launched if `pip` is available.
 
 ---
 
@@ -106,7 +134,7 @@ Paste a PowerShell script into the **Embedded Payload** area. Enable **XOR Encod
 | **Append Mode** | Payload appended to LNK; extracted via obfuscated PowerShell reflection stub. |
 | **Binary Smuggling** | VBS extractor + payload appended; target = `wscript.exe //B`. |
 | **True Icon Smuggling** | Payload in `IconEnvironmentDataBlock`; target = `notepad.exe`. Extractor VBS saved separately. |
-| **Self‑Extracting LNK** | VBS extractor appended between markers; `cmd.exe` + `findstr` extracts and runs with `wscript`. |
+| **Self‑Extracting LNK (Hex)** | Hex‑encoded VBS appended after marker; `cmd.exe` + `findstr` + `certutil -decodehex` + `wscript`. Recommended for maximum evasion. |
 
 ### 🔧 Multi‑Stage Stager
 1. Check **Multi‑Stage Stager**.
@@ -132,12 +160,12 @@ GhostLNK incorporates techniques observed in modern attack chains to help reduce
 
 These approaches are not silver bullets but are designed to raise the bar for detection.
 
-### Self‑Extracting LNK (cmd + findstr + wscript)
+### Self‑Extracting LNK (Hex) — The Recommended Method
 ```
 Target:   C:\Windows\System32\cmd.exe
-Arguments: /c findstr /v "^-----" "%~f0" > "%TEMP%\e.vbs" & wscript //B "%TEMP%\e.vbs"
+Arguments: /c "findstr /b "GHOSTLNK_HEX:" "%~f0" > "%TEMP%\e.hex" & certutil -decodehex "%TEMP%\e.hex" "%TEMP%\e.vbs" & wscript //B "%TEMP%\e.vbs""
 ```
-The LNK file contains a VBS script wrapped between `-----BEGIN VBS-----` and `-----END VBS-----` markers, followed by the encrypted payload. `findstr` extracts the script, `wscript` executes it, and the VBS decrypts and runs the PowerShell payload. This method avoids placing PowerShell directly in the LNK arguments.
+The LNK file contains a hex‑encoded VBS script after the `GHOSTLNK_HEX:` marker. `findstr` extracts the hex data, `certutil` decodes it to a VBS file, and `wscript` executes it. The VBS then decrypts and runs the PowerShell payload. No Base64 patterns and no PowerShell in the arguments—this method has demonstrated strong evasion against static scanners.
 
 ---
 
@@ -152,7 +180,7 @@ The LNK file contains a VBS script wrapped between `-----BEGIN VBS-----` and `--
 ```
 
 ### Custom Icons
-Edit `ICON_DATABASE` in `ghostlnk.py`:
+Edit `ICON_DATABASE` in `gui/main_window.py`:
 ```python
 ICON_DATABASE = {
     "My App": (r"C:\Path\to\app.exe", 0, ".custom"),
@@ -166,8 +194,8 @@ ICON_DATABASE = {
 | Symptom | Likely Fix |
 |---------|------------|
 | LNK doesn't execute | Verify URL accessibility and `dl=1` on Dropbox. |
-| Detection still occurs | Try **Self‑Extracting LNK** or **True Icon Smuggling** for reduced signature exposure. |
-| GUI won't start | `pip install PyQt6 pylnk3` manually. |
+| Detection still occurs | Use **Self‑Extracting LNK (Hex)** – it avoids Base64 signatures. |
+| GUI won't start | Run `pip install -r requirements.txt` manually. |
 | Buttons stay grayed out | Update to latest code; conflict logic was refined. |
 | Import doesn't add `-E` | Click the **Import** button after pasting. |
 
