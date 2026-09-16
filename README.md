@@ -105,7 +105,7 @@ Paste a PowerShell script into the **Embedded Payload** area. Enable **XOR Encod
 | **True Icon Smuggling** | Payload in `IconEnvironmentDataBlock`; target = `notepad.exe`. Extractor VBS saved separately. |
 | **Self‑Extracting LNK (Hex)** | Hex‑encoded VBS appended after marker; `cmd.exe` + `findstr` + `certutil -decodehex` + `wscript`. Recommended for maximum evasion. |
 
-### 🔧 Multi‑Stage Stager
+### Multi‑Stage Stager
 1. Check **Multi‑Stage Stager**.
 2. Provide **Decoy PDF URL** (opened immediately).
 3. Provide **Final Payload URL** (executed via scheduled task).
