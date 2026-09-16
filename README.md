@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=28&duration=3000&pause=500&color=6A1F7A&center=true&vCenter=true&width=600&lines=GhostLNK;Advanced+LNK+Generator+%2B+Evasion" alt="GhostLNK" />
+  <img src="https://github.com/user-attachments/assets/dccc9f88-7ac0-4ca2-b52b-8ee14e198eed" alt="GhostLNK" />
 </p>
 
 <p align="center">
