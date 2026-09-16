@@ -67,38 +67,6 @@
 
 ---
 
-## Project Structure (Modular)
-
-GhostLNK has been refactored into a clean, maintainable structure:
-
-```
-GhostLNK/
-├── ghostlnk.py                 # Entry point – launches the GUI
-├── core/
-│   ├── __init__.py
-│   ├── engine.py               # LNKEngine – creates LNK files, binary patching
-│   └── converter.py            # PowerShellConverter, URLExamples
-├── gui/
-│   ├── __init__.py
-│   ├── main_window.py          # GhostLNKGUI – UI logic and interactions
-│   └── styles.py               # Neon dark theme
-├── utils/
-│   ├── __init__.py
-│   ├── helpers.py              # XOR, obfuscation, config I/O, anti‑sandbox
-│   └── dependencies.py         # Auto‑installation of PyQt6 and pylnk3
-├── README.md
-├── LICENSE
-└── requirements.txt
-```
-
----
-
-## Installation
-
-### Prerequisites
-- **Python 3.8+**
-- **Windows OS** (LNK generation requires Windows API structures)
-
 ### Quick Setup
 ```bash
 git clone https://github.com/Excalibra/GhostLNK.git
