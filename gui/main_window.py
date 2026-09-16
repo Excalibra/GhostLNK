@@ -16,7 +16,9 @@ import pylnk3
 
 from core.engine import LNKEngine
 from core.converter import PowerShellConverter, URLExamples
-from gui.styles import STYLESHEET
+from gui.styles import (STYLESHEET, COLOR_BG, COLOR_PANEL, COLOR_INPUT, COLOR_BORDER,
+                        COLOR_TEXT, COLOR_MUTED, COLOR_FAINT, COLOR_ACCENT,
+                        COLOR_ACCENT_DIM, COLOR_SUCCESS, COLOR_WARNING)
 from utils.helpers import (load_config, save_config, xor_encode, obfuscate_strings,
                            build_antisanbox_stub, generate_random_folder_name,
                            generate_task_name)
@@ -74,19 +76,19 @@ class GhostLNKGUI(QMainWindow):
         left_layout.setSpacing(2)
         left_layout.setContentsMargins(0, 0, 0, 0)
 
-        title = QLabel("GhostLNK")
+        title = QLabel("GHOSTLNK")
         title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        title.setStyleSheet("color: #FF00FF; font-size: 24px; font-weight: bold; font-family: 'Courier New', monospace;")
+        title.setStyleSheet(f"color: {COLOR_TEXT}; font-size: 26px; font-weight: 600;")
         left_layout.addWidget(title)
 
         credit = QLabel("Created by: github.com/Excalibra")
         credit.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        credit.setStyleSheet("color: #FFFF00; font-size: 12px; font-weight: bold; font-family: 'Courier New', monospace;")
+        credit.setStyleSheet(f"color: {COLOR_ACCENT}; font-size: 11px;")
         left_layout.addWidget(credit)
 
-        subtitle = QLabel("Dropbox: &dl=1 | STEALTH | HIDE | RAW TARGET | EVASION | EMBED | APPEND | ICON SMUGGLING | SELF-EXTRACT | KIMSUKY CAMPAIGN")
+        subtitle = QLabel("Dropbox: &dl=1  ·  Stealth  ·  Hide  ·  Raw Target  ·  Evasion  ·  Embed  ·  Append  ·  Icon Smuggling  ·  Self-Extract  ·  Kimsuky Campaign")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        subtitle.setStyleSheet("color: #00FFFF; font-size: 10px; font-family: 'Courier New', monospace;")
+        subtitle.setStyleSheet(f"color: {COLOR_FAINT}; font-size: 10px;")
         left_layout.addWidget(subtitle)
 
         header_layout.addWidget(left_header, 1)
@@ -104,7 +106,7 @@ class GhostLNKGUI(QMainWindow):
         console_layout.addLayout(console_toolbar)
         self.console = QTextEdit()
         self.console.setReadOnly(True)
-        self.console.setStyleSheet("background-color: #000000; color: #00FF00; font-family: 'Courier New', monospace; font-size: 9px; border: 1px solid #FF00FF;")
+        self.console.setStyleSheet(f"background-color: {COLOR_INPUT}; color: #8f9a8f; font-family: 'Cascadia Mono', 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 10px; border: 1px solid {COLOR_BORDER}; border-radius: 2px;")
         console_layout.addWidget(self.console)
         console_group.setLayout(console_layout)
         header_layout.addWidget(console_group, 2)
@@ -127,7 +129,6 @@ class GhostLNKGUI(QMainWindow):
         splitter.setSizes([int(window_width * 0.45), int(window_width * 0.45)])
 
         self.statusBar().showMessage("GhostLNK :: github.com/Excalibra")
-        self.statusBar().setStyleSheet("color: #00FFFF; font-family: 'Courier New', monospace;")
 
         self.create_menu()
         self.log("GhostLNK initialized")
@@ -145,7 +146,7 @@ class GhostLNKGUI(QMainWindow):
         self.url_input.textChanged.connect(self.on_url_changed)
         url_layout.addWidget(self.url_input)
         self.dropbox_indicator = QLabel("")
-        self.dropbox_indicator.setStyleSheet("color: #FFFF00; font-size: 9px;")
+        self.dropbox_indicator.setStyleSheet(f"color: {COLOR_FAINT}; font-size: 10px;")
         url_layout.addWidget(self.dropbox_indicator)
         url_group.setLayout(url_layout)
         layout.addWidget(url_group)
@@ -179,7 +180,7 @@ class GhostLNKGUI(QMainWindow):
         type_layout.addWidget(self.type_combo)
         self.type_hint = QLabel("Selected: For PDFs and documents - saves to temp and opens")
         self.type_hint.setWordWrap(True)
-        self.type_hint.setStyleSheet("color: #888888; font-size: 9px; padding: 2px;")
+        self.type_hint.setStyleSheet(f"color: {COLOR_MUTED}; font-size: 10px; padding: 2px;")
         type_layout.addWidget(self.type_hint)
         type_group.setLayout(type_layout)
         layout.addWidget(type_group)
@@ -196,7 +197,7 @@ class GhostLNKGUI(QMainWindow):
         stealth_layout.addWidget(self.stealth_combo)
         self.stealth_hint = QLabel("Maximum Stealth: Uses aliases, avoids -WindowStyle Hidden, minimal code")
         self.stealth_hint.setWordWrap(True)
-        self.stealth_hint.setStyleSheet("color: #00FF00; font-size: 9px; padding: 2px;")
+        self.stealth_hint.setStyleSheet(f"color: {COLOR_MUTED}; font-size: 10px; padding: 2px;")
         stealth_layout.addWidget(self.stealth_hint)
         stealth_group.setLayout(stealth_layout)
         layout.addWidget(stealth_group)
@@ -219,51 +220,47 @@ class GhostLNKGUI(QMainWindow):
         layout.addWidget(options_group)
 
         gen_group = QGroupBox("Step 5: Generate (Click in Order)")
-        gen_group.setStyleSheet("QGroupBox { font-weight: bold; color: #FF00FF; }")
+        gen_group.setStyleSheet(f"QGroupBox {{ font-weight: bold; color: {COLOR_ACCENT}; }}")
         gen_layout = QVBoxLayout()
         order_label = QLabel("CLICK IN ORDER: 1 -> 2 -> 3 -> 4")
-        order_label.setStyleSheet("color: #FF0000; font-weight: bold; font-size: 10px; padding: 2px;")
+        order_label.setStyleSheet(f"color: {COLOR_ACCENT}; font-weight: bold; font-size: 10px; padding: 2px;")
         order_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         gen_layout.addWidget(order_label)
         btn_row1 = QHBoxLayout()
         self.show_btn = QPushButton("1. Show Command")
-        self.show_btn.setStyleSheet("background-color: #000000; color: #00FFFF; border: 1px solid #FF00FF;")
         self.show_btn.clicked.connect(self.show_command)
         btn_row1.addWidget(self.show_btn)
         self.encode_btn = QPushButton("2. Encode to Base64")
-        self.encode_btn.setStyleSheet("background-color: #000000; color: #FFFF00; border: 1px solid #00FFFF;")
         self.encode_btn.clicked.connect(self.encode)
         btn_row1.addWidget(self.encode_btn)
         gen_layout.addLayout(btn_row1)
         btn_row2 = QHBoxLayout()
         self.copy_btn = QPushButton("3. Copy -E Argument")
-        self.copy_btn.setStyleSheet("background-color: #000000; color: #00FF00; border: 1px solid #FFFF00;")
         self.copy_btn.clicked.connect(self.copy_arg)
         btn_row2.addWidget(self.copy_btn)
         self.use_btn = QPushButton("4. Use in LNK Generator")
-        self.use_btn.setStyleSheet("background-color: #000000; color: #FF00FF; border: 1px solid #00FF00;")
         self.use_btn.clicked.connect(self.use_in_lnk)
         btn_row2.addWidget(self.use_btn)
         gen_layout.addLayout(btn_row2)
         progress_frame = QFrame()
         progress_frame.setFrameStyle(QFrame.Shape.Box)
-        progress_frame.setStyleSheet("background-color: #000000; border: 1px solid #00FFFF; padding: 5px;")
+        progress_frame.setStyleSheet(f"background-color: {COLOR_INPUT}; border: 1px solid {COLOR_BORDER}; border-radius: 2px; padding: 5px;")
         progress_layout = QHBoxLayout(progress_frame)
         progress_layout.addWidget(QLabel("Progress:"))
         self.step1_indicator = QLabel("[ ] Step 1")
-        self.step1_indicator.setStyleSheet("color: #666666;")
+        self.step1_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
         progress_layout.addWidget(self.step1_indicator)
         progress_layout.addWidget(QLabel("->"))
         self.step2_indicator = QLabel("[ ] Step 2")
-        self.step2_indicator.setStyleSheet("color: #666666;")
+        self.step2_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
         progress_layout.addWidget(self.step2_indicator)
         progress_layout.addWidget(QLabel("->"))
         self.step3_indicator = QLabel("[ ] Step 3")
-        self.step3_indicator.setStyleSheet("color: #666666;")
+        self.step3_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
         progress_layout.addWidget(self.step3_indicator)
         progress_layout.addWidget(QLabel("->"))
         self.step4_indicator = QLabel("[ ] Step 4")
-        self.step4_indicator.setStyleSheet("color: #666666;")
+        self.step4_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
         progress_layout.addWidget(self.step4_indicator)
         progress_layout.addStretch()
         gen_layout.addWidget(progress_frame)
@@ -278,7 +275,7 @@ class GhostLNKGUI(QMainWindow):
         results_layout.addWidget(self.cmd_display)
         self.arg_display = QTextEdit()
         self.arg_display.setMaximumHeight(40)
-        self.arg_display.setStyleSheet("color: #FF8888;")
+        self.arg_display.setStyleSheet(f"color: #d9a0a0; background-color: {COLOR_INPUT};")
         results_layout.addWidget(QLabel("Final -E Argument (copy this):"))
         results_layout.addWidget(self.arg_display)
         results_group.setLayout(results_layout)
@@ -328,7 +325,7 @@ class GhostLNKGUI(QMainWindow):
             "Note: URL should be enclosed in quotes. Example: \"https://example.com/script.hta\""
         )
         note_label.setWordWrap(True)
-        note_label.setStyleSheet("color: #AAAAAA; font-size: 9px; margin-left: 5px;")
+        note_label.setStyleSheet(f"color: {COLOR_MUTED}; font-size: 10px; margin-left: 5px;")
         raw_sub_layout.addWidget(note_label)
         workdir_layout = QHBoxLayout()
         workdir_layout.addWidget(QLabel("Working Dir (optional):"))
@@ -554,7 +551,7 @@ class GhostLNKGUI(QMainWindow):
         preview_layout.addWidget(QLabel("Target: (not set)"))
         self.preview_label = QLabel("Arguments: (not set)")
         self.preview_label.setWordWrap(True)
-        self.preview_label.setStyleSheet("color: #FFFF00; background-color: #000000; border: 1px solid #00FFFF; padding: 3px;")
+        self.preview_label.setStyleSheet(f"color: {COLOR_WARNING}; background-color: {COLOR_INPUT}; border: 1px solid {COLOR_BORDER}; border-radius: 2px; padding: 5px; font-family: 'Cascadia Mono', 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 11px;")
         preview_layout.addWidget(self.preview_label)
         preview_group.setLayout(preview_layout)
         layout.addWidget(preview_group)
@@ -599,18 +596,34 @@ class GhostLNKGUI(QMainWindow):
         layout.addWidget(desc_group)
 
         self.mode_indicator = QLabel("Current Mode: Download & Open")
-        self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+        self.mode_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
         layout.addWidget(self.mode_indicator)
         self.stealth_indicator = QLabel("Stealth: Maximum (AV Bypass)")
-        self.stealth_indicator.setStyleSheet("color: #00FF00;")
+        self.stealth_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
         layout.addWidget(self.stealth_indicator)
         self.hide_indicator = QLabel("PowerShell Window: Visible")
-        self.hide_indicator.setStyleSheet("color: #FFFF00;")
+        self.hide_indicator.setStyleSheet(f"color: {COLOR_WARNING};")
         layout.addWidget(self.hide_indicator)
 
         generate_btn = QPushButton("GENERATE LNK FILE")
         generate_btn.setMinimumHeight(45)
-        generate_btn.setStyleSheet("background-color: #000000; color: #FF00FF; border: 2px solid #FF00FF; font-size: 14px; font-weight: bold;")
+        generate_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLOR_ACCENT_DIM};
+                color: #f0f0f2;
+                border: 1px solid {COLOR_ACCENT};
+                border-radius: 2px;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {COLOR_ACCENT};
+                border: 1px solid {COLOR_ACCENT};
+            }}
+            QPushButton:pressed {{
+                background-color: #4a1215;
+            }}
+        """)
         generate_btn.clicked.connect(self.generate_lnk)
         layout.addWidget(generate_btn)
 
@@ -655,7 +668,7 @@ class GhostLNKGUI(QMainWindow):
         self.embedded_generate_btn.setEnabled(not enabled)
         if enabled:
             self.mode_indicator.setText("Current Mode: RAW TARGET (Custom EXE)")
-            self.mode_indicator.setStyleSheet("color: #FFFF00; font-weight: bold;")
+            self.mode_indicator.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: bold;")
             self.stealth_indicator.setText("Stealth: N/A (raw target)")
             self.hide_indicator.setText("PowerShell: N/A")
             self.preview_label.setText("Raw target mode active - fill in target and arguments above")
@@ -679,7 +692,6 @@ class GhostLNKGUI(QMainWindow):
 
     def create_menu(self):
         menubar = self.menuBar()
-        menubar.setStyleSheet("color: #00FFFF; background-color: #000000;")
         help_menu = menubar.addMenu("Help")
         about = QAction("About GhostLNK", self)
         about.triggered.connect(self.show_about)
@@ -734,13 +746,13 @@ class GhostLNKGUI(QMainWindow):
             stealth = ["Normal", "Moderate", "Maximum"][self.stealth_combo.currentIndex()]
             self.log(f"[OK] Command generated - Mode: {mode}, Stealth: {stealth}")
             self.step1_indicator.setText("[X] Step 1")
-            self.step1_indicator.setStyleSheet("color: #00FF00;")
+            self.step1_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step2_indicator.setText("[ ] Step 2")
-            self.step2_indicator.setStyleSheet("color: #666666;")
+            self.step2_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
             self.step3_indicator.setText("[ ] Step 3")
-            self.step3_indicator.setStyleSheet("color: #666666;")
+            self.step3_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
             self.step4_indicator.setText("[ ] Step 4")
-            self.step4_indicator.setStyleSheet("color: #666666;")
+            self.step4_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
 
     def encode(self):
         payload = self.get_payload()
@@ -753,13 +765,13 @@ class GhostLNKGUI(QMainWindow):
             stealth = ["Normal", "Moderate", "Maximum"][self.stealth_combo.currentIndex()]
             self.log(f"[OK] Encoded - Mode: {mode}, Stealth: {stealth} | Length: {len(encoded)} chars")
             self.step1_indicator.setText("[X] Step 1")
-            self.step1_indicator.setStyleSheet("color: #00FF00;")
+            self.step1_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step2_indicator.setText("[X] Step 2")
-            self.step2_indicator.setStyleSheet("color: #00FF00;")
+            self.step2_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step3_indicator.setText("[ ] Step 3")
-            self.step3_indicator.setStyleSheet("color: #666666;")
+            self.step3_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
             self.step4_indicator.setText("[ ] Step 4")
-            self.step4_indicator.setStyleSheet("color: #666666;")
+            self.step4_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
 
     def copy_arg(self):
         arg = self.arg_display.toPlainText().strip()
@@ -768,13 +780,13 @@ class GhostLNKGUI(QMainWindow):
             self.import_input.setText(arg)
             self.log("[OK] Copied to clipboard")
             self.step1_indicator.setText("[X] Step 1")
-            self.step1_indicator.setStyleSheet("color: #00FF00;")
+            self.step1_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step2_indicator.setText("[X] Step 2")
-            self.step2_indicator.setStyleSheet("color: #00FF00;")
+            self.step2_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step3_indicator.setText("[X] Step 3")
-            self.step3_indicator.setStyleSheet("color: #00FF00;")
+            self.step3_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step4_indicator.setText("[ ] Step 4")
-            self.step4_indicator.setStyleSheet("color: #666666;")
+            self.step4_indicator.setStyleSheet(f"color: {COLOR_FAINT};")
 
     def use_in_lnk(self):
         arg = self.arg_display.toPlainText().strip()
@@ -783,13 +795,13 @@ class GhostLNKGUI(QMainWindow):
             self.preview_label.setText(f"Arguments: {arg[:100]}...")
             self.log("[OK] Loaded into LNK generator")
             self.step1_indicator.setText("[X] Step 1")
-            self.step1_indicator.setStyleSheet("color: #00FF00;")
+            self.step1_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step2_indicator.setText("[X] Step 2")
-            self.step2_indicator.setStyleSheet("color: #00FF00;")
+            self.step2_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step3_indicator.setText("[X] Step 3")
-            self.step3_indicator.setStyleSheet("color: #00FF00;")
+            self.step3_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
             self.step4_indicator.setText("[X] Step 4")
-            self.step4_indicator.setStyleSheet("color: #00FF00;")
+            self.step4_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
 
     def import_arg(self):
         arg = self.import_input.text().strip()
@@ -819,7 +831,7 @@ class GhostLNKGUI(QMainWindow):
         self.log(f"[OK] Raw base64 loaded as payload (length {len(raw_b64)})")
         if not self.raw_mode_cb.isChecked():
             self.mode_indicator.setText("Current Mode: Direct Base64 Payload")
-            self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+            self.mode_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
 
     def generate_desc(self):
         date = datetime.now().strftime("%d/%m/%Y")
@@ -1199,7 +1211,7 @@ Invoke-Expression $s
             self.log(f"[OK] Embedded payload generated ({len(encoded_b64)} chars base64)")
             self.mode_indicator.setText("Current Mode: Embedded Payload (No Network)")
 
-        self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+        self.mode_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
 
     # ----------------------------------------------------------------------
     # Simple Multi-Stage Stager (original)
@@ -1421,30 +1433,30 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
             cb.style().polish(cb)
             cb.update()
         self.hide_indicator.setText("PowerShell Window: Visible")
-        self.hide_indicator.setStyleSheet("color: #FFFF00;")
+        self.hide_indicator.setStyleSheet(f"color: {COLOR_WARNING};")
         mode_names = ["Download & Open", "Memory Execute", "Ultra Stealth"]
         current_mode = mode_names[self.type_combo.currentIndex()]
         self.mode_indicator.setText(f"Current Mode: {current_mode}")
-        self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+        self.mode_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
         conflicts = []
         if hide_pwsh:
             self.pause_cb.setEnabled(False)
             self.pause_cb.setChecked(False)
-            self.pause_cb.setStyleSheet("color: #666666;")
+            self.pause_cb.setStyleSheet(f"color: {COLOR_FAINT};")
             conflicts.append("Pause disabled: Conflicts with hidden window")
             self.debug_cb.setEnabled(False)
             self.debug_cb.setChecked(False)
-            self.debug_cb.setStyleSheet("color: #666666;")
+            self.debug_cb.setStyleSheet(f"color: {COLOR_FAINT};")
             conflicts.append("Debug disabled: Debug output would be invisible")
-            self.hide_pwsh_cb.setStyleSheet("color: #00FF00; font-weight: bold;")
+            self.hide_pwsh_cb.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
             self.hide_indicator.setText("PowerShell Window: HIDDEN")
-            self.hide_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+            self.hide_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
             for cb in [self.pause_cb, self.debug_cb, self.hide_pwsh_cb]:
                 cb.style().unpolish(cb)
                 cb.style().polish(cb)
                 cb.update()
             self.mode_indicator.setText(f"Current Mode: {current_mode} (no pause, no debug)")
-            self.mode_indicator.setStyleSheet("color: #FFFF00; font-weight: bold;")
+            self.mode_indicator.setStyleSheet(f"color: {COLOR_WARNING}; font-weight: bold;")
         self.pause_cb.setToolTip(self.get_tooltip("pause", conflicts))
         self.debug_cb.setToolTip(self.get_tooltip("debug", conflicts))
         self.hide_pwsh_cb.setToolTip(self.get_tooltip("hide", conflicts))
@@ -1478,10 +1490,10 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
         if 'dropbox.com' in url.lower():
             if 'dl=1' not in url:
                 self.dropbox_indicator.setText("WARNING: Missing dl=1! Add &dl=1 to the end")
-                self.dropbox_indicator.setStyleSheet("color: #FF6666;")
+                self.dropbox_indicator.setStyleSheet(f"color: {COLOR_WARNING};")
             else:
                 self.dropbox_indicator.setText("OK: dl=1 present")
-                self.dropbox_indicator.setStyleSheet("color: #66FF66;")
+                self.dropbox_indicator.setStyleSheet(f"color: {COLOR_SUCCESS};")
         else:
             self.dropbox_indicator.setText("")
         if url:
@@ -1498,7 +1510,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
         self.type_hint.setText(types[self.type_combo.currentIndex()])
         mode_names = ["Download & Open", "Memory Execute", "Ultra Stealth"]
         self.mode_indicator.setText(f"Current Mode: {mode_names[self.type_combo.currentIndex()]}")
-        self.mode_indicator.setStyleSheet("color: #00FF00; font-weight: bold;")
+        self.mode_indicator.setStyleSheet(f"color: {COLOR_SUCCESS}; font-weight: bold;")
         self.update_options()
 
     # ----------------------------------------------------------------------
