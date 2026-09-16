@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/dccc9f88-7ac0-4ca2-b52b-8ee14e198eed" alt="GhostLNK" />
-</p>
-
-<p align="center">
   <!-- Badges -->
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://www.riverbankcomputing.com/software/pyqt/"><img src="https://img.shields.io/badge/PyQt6-6.0+-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="PyQt6"></a>
@@ -12,8 +8,13 @@
 </p>
 
 <p align="center">
-  <img width="1919" height="909" alt="GhostLNK Interface" src="https://github.com/user-attachments/assets/227e16d1-15b7-4978-837b-bddb2e9f2c52" />
+  <img src="https://github.com/user-attachments/assets/dccc9f88-7ac0-4ca2-b52b-8ee14e198eed" alt="GhostLNK" />
 </p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/22d8e7ec-307e-4a2b-8a60-a0979c95552b" alt="GhostLNK" />
+</p>
+
 
 ---
 
