@@ -182,10 +182,10 @@ ICON_DATABASE = {
 
 > [!CAUTION]
 > GhostLNK is **only** for:
-> - ✅ Authorized penetration testing
-> - ✅ Red team operations with explicit permission
-> - ✅ Educational demonstrations
-> - ✅ Defensive research
+> - Authorized penetration testing
+> - Red team operations with explicit permission
+> - Educational demonstrations
+> - Defensive research
 >
 > Unauthorized use violates laws and is strictly prohibited.
 
