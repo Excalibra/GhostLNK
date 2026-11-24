@@ -11,9 +11,8 @@
   <img src="https://github.com/user-attachments/assets/1c1bce56-f70f-4d51-8448-dfbec50838d9" alt="GhostLNK" />
 </p>
 <p align="center">
-  <img src="" alt="GhostLNK" />
+  <img src="" alt="https://github.com/user-attachments/assets/9e2aa1ca-606a-48a8-b482-63ce16450079" />
 </p>
-
 
 ---
 
