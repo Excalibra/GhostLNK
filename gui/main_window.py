@@ -28,7 +28,8 @@ CONFIG_FILE = "ghostlnk_config.json"
 
 class GhostLNKGUI(QMainWindow):
     ICON_DATABASE = {
-        "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
+        "PDF Document": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 13, ".pdf"),
+        "PDF Document - Edge Index 11": (r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe", 11, ".pdf"),
         "PDF Document - Generic": (r"C:\Windows\System32\SHELL32.dll", 1, ".pdf"),
         "Word Document": (r"C:\Windows\System32\SHELL32.dll", 1, ".doc"),
         "Excel Spreadsheet": (r"C:\Windows\System32\SHELL32.dll", 3, ".xls"),
@@ -40,6 +41,7 @@ class GhostLNKGUI(QMainWindow):
     }
     ICON_PREVIEWS = {
         "PDF Document": "pdf-edge.svg",
+        "PDF Document - Edge Index 11": "pdf-edge.svg",
         "PDF Document - Generic": "pdf-generic.svg",
         "Word Document": "word.svg",
         "Excel Spreadsheet": "excel.svg",
