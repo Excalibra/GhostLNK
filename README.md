@@ -8,7 +8,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/1c1bce56-f70f-4d51-8448-dfbec50838d9" alt="GhostLNK" />
+  <img src="https://github.com/user-attachments/assets/d93d1317-40f7-44a0-88bc-5dc781c795b9" alt="GhostLNK" />
 </p>
 
 
