@@ -7,14 +7,6 @@
   <a href="https://github.com/Excalibra"><img src="https://img.shields.io/badge/GitHub-Excalibra-181717?style=for-the-badge&logo=github" alt="GitHub"></a>
 </p>
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/dccc9f88-7ac0-4ca2-b52b-8ee14e198eed" alt="GhostLNK" />
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/22d8e7ec-307e-4a2b-8a60-a0979c95552b" alt="GhostLNK" />
-</p>
-
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/16a9ac59-cb17-44e2-af17-130fa18f8f3f" alt="GhostLNK" />
@@ -28,6 +20,15 @@
 
 > [!IMPORTANT]
 > GhostLNK is intended **exclusively** for authorized security testing, red team operations, and educational research. Misuse is strictly prohibited.
+
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/dccc9f88-7ac0-4ca2-b52b-8ee14e198eed" alt="GhostLNK" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/22d8e7ec-307e-4a2b-8a60-a0979c95552b" alt="GhostLNK" />
+</p>
 
 ---
 
