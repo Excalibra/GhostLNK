@@ -164,6 +164,12 @@ class LNKEngine:
 
         lnk.icon = icon_path
         lnk.icon_index = icon_index
+        if "%" in icon_path:
+            icon_environment = pylnk3.ExtraData_IconEnvironmentDataBlock()
+            icon_environment.target_ansi = icon_path
+            icon_environment.target_unicode = icon_path
+            lnk.extra_data = pylnk3.ExtraData(blocks=[icon_environment])
+            lnk.link_flags.HasExpIcon = True
         lnk.working_dir = target_directory
         if description:
             lnk.description = description
