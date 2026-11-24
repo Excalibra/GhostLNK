@@ -1,4 +1,3 @@
-<p align="center">
   <!-- Badges -->
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"></a>
   <a href="https://www.riverbankcomputing.com/software/pyqt/"><img src="https://img.shields.io/badge/PyQt6-6.0+-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="PyQt6"></a>
@@ -9,7 +8,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/16a9ac59-cb17-44e2-af17-130fa18f8f3f" alt="GhostLNK" />
+  <img src="https://github.com/user-attachments/assets/1c1bce56-f70f-4d51-8448-dfbec50838d9" alt="GhostLNK" />
 </p>
 
 ---
