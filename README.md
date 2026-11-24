@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="" alt="https://github.com/user-attachments/assets/9e2aa1ca-606a-48a8-b482-63ce16450079" />
+  <img src="https://github.com/user-attachments/assets/9e2aa1ca-606a-48a8-b482-63ce16450079" alt="GhostLNK" />
 </p>
 
 ---
