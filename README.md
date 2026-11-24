@@ -29,6 +29,10 @@
   <img src="https://github.com/user-attachments/assets/22d8e7ec-307e-4a2b-8a60-a0979c95552b" alt="GhostLNK" />
 </p>
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/320a8580-8853-481b-bde3-f3aef380c66b" alt="GhostLNK" />
+</p>
+
 ---
 
 ## Key Features
