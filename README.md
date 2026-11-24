@@ -30,8 +30,9 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/320a8580-8853-481b-bde3-f3aef380c66b" alt="GhostLNK" />
+  <img src="https://github.com/user-attachments/assets/7a92ce3e-b82e-4beb-a58d-f09f6957f695" height=2220 alt="GhostLNK" />
 </p>
+
 
 ---
 
